@@ -9,6 +9,7 @@ module "lambda_manage_ec2" {
   runtime       = "nodejs20.x"
 
   publish = true
+  create_lambda_function_url = true
 
   source_path = "lambda-manage-ec2/build/index.js"
 
@@ -16,12 +17,5 @@ module "lambda_manage_ec2" {
 
   environment_variables = {
     DISCORD_APP_PUBLIC_KEY = var.discord_public_key
-  }
-
-  allowed_triggers = {
-    APIGatewayDiscordInteractions = {
-      service = "apigateway"
-      source_arn = "${module.api_gateway.apigatewayv2_api_execution_arn}/$default/POST${local.lambda_interaction_route}"
-    }
   }
 }

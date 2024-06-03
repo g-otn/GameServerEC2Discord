@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -7,12 +9,17 @@ terraform {
   }
 }
 
-# Configure the AWS Provider
 provider "aws" {
-  region = "us-east-2"
-}
+  region = var.aws_region
 
-# Create a VPC
-resource "aws_vpc" "example" {
-  cidr_block = "10.0.0.0/16"
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
+
+  default_tags {
+    tags = {
+      Terraform = "true"
+      "minecraft-spot-discord:related": "true"
+      "minecraft-spot-discord:server-name" : var.name
+    }
+  }
 }

@@ -1,0 +1,50 @@
+#cloud-config
+packages:
+  - htop
+  - java-17-amazon-corretto-headless
+
+runcmd:
+  - [ln, -s, "/home/ec2-user/duckdns/duck_daemon.sh /etc/rc2.d/S10duckdns"] # Setup for subsequential startups
+  - [/etc/rc2.d/S10duckdns] # Manually run it the first time
+
+write_files:
+  - path: /home/ec2-user/duckdns/duck.sh
+    permissions: "0655"
+    owner: ec2-user
+    content: |
+      #!/bin/bash
+
+      # Periodically updates Duck DNS' domain current IP if ec2 public IP has changed.
+      # Based on https://www.duckdns.org/install.jsp#ec2
+
+      domains=
+      token=
+      interval=
+
+      current=""
+
+      while true; do
+        latest=`ec2-metadata --public-ipv4`
+        
+        echo "$(date --rfc-3339=seconds) | Public IPv4: $latest"
+
+        if [ "$current" == "$latest" ]
+        then
+          echo "$(date --rfc-3339=seconds) | IP not changed"
+        else
+          echo "$(date --rfc-3339=seconds) | IP has changed - updating"
+          current=$latest
+          echo url="https://www.duckdns.org/update?domains=$domains&token=$token&ip=" | curl -k -o ~/duckdns/duck.log -K -
+        fi
+
+        sleep $interval
+      done
+  - path: /home/ec2-user/duckdns/duck_dameon.sh
+    permissions: "0744"
+    owner: ec2-user
+    content: |
+      #!/bin/bash
+
+      # From https://www.duckdns.org/install.jsp#ec2
+
+      su - ec2-user -c "nohup ~/duckdns/duck.sh > ~/duckdns/duck.log 2>&1&"

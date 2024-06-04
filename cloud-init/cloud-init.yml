@@ -1,11 +1,12 @@
 #cloud-config
 packages:
   - htop
-  - java-17-amazon-corretto-headless
+  - java-21-amazon-corretto-headless
 
 runcmd:
-  - [ln, -s, "/home/ec2-user/duckdns/duck_daemon.sh /etc/rc2.d/S10duckdns"] # Setup for subsequential startups
-  - [/etc/rc2.d/S10duckdns] # Manually run it the first time
+  - [ln, -s, /home/ec2-user/duckdns/duck_daemon.sh, /etc/rc2.d/S10duckdns] # Setup for subsequential startups
+  - [/etc/rc2.d/S10duckdns] # Manually run it on the first time instance starts
+  - [chown, -R, ec2-user:ec2-user, /home/ec2-user] # Required because ec2 userdata will create files (and ec2-user home folder) as root
 
 write_files:
   - path: /home/ec2-user/duckdns/duck.sh

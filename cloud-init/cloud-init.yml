@@ -17,9 +17,9 @@ write_files:
       # Periodically updates Duck DNS' domain current IP if ec2 public IP has changed.
       # Based on https://www.duckdns.org/install.jsp#ec2
 
-      domains=
-      token=
-      interval=
+      domains=${duckdns_domain}
+      token=${duckdns_token}
+      interval=${duckdns_interval}
 
       current=""
 

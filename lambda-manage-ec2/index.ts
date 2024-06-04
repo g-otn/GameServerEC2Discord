@@ -1,4 +1,4 @@
-import { EC2ServiceException } from '@aws-sdk/client-ec2';
+import { DescribeInstancesCommand, EC2Client } from '@aws-sdk/client-ec2';
 import type {
   APIGatewayProxyEventV2,
   APIGatewayProxyResultV2,
@@ -8,13 +8,19 @@ import {
   APIChatInputApplicationCommandInteraction,
   InteractionResponseType,
   InteractionType,
-  type APIInteraction,
   type APIInteractionResponseChannelMessageWithSource,
   type APIInteractionResponsePong,
+  APIChatInputApplicationCommandInteractionData,
+  APIInteractionResponseDeferredChannelMessageWithSource,
 } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
 
-const AWS_REGION = process.env.AWS_REGION;
+// comment for debugging bundle
+//!
+//!
+//! End of vendor code
+//!
+
 const DISCORD_APP_PUBLIC_KEY = process.env.DISCORD_APP_PUBLIC_KEY;
 const MINECRAFT_SERVER_URL = process.env.MINECRAFT_SERVER_URL;
 
@@ -36,17 +42,36 @@ const buildResult = (
 const validate = async (event: APIGatewayProxyEventV2) => {
   return verify(
     event.body,
-    event.headers['x-signature-ed25519'],
-    event.headers['x-signature-timestamp'],
+    event.headers?.['x-signature-ed25519'],
+    event.headers?.['x-signature-timestamp'],
     DISCORD_APP_PUBLIC_KEY,
     crypto.subtle
   );
 };
 
 const handleCommand = async (
-  data: APIChatInputApplicationCommandInteraction
-) => {
-  // const client = new EC2Client({ region: 'REGION' });
+  data: APIChatInputApplicationCommandInteractionData
+): Promise<APIGatewayProxyResultV2> => {
+  const command = data.name;
+
+  console.log('Handling command', command, 'from interaction', data.id);
+
+  const client = new EC2Client({});
+
+  const output = await client.send(new DescribeInstancesCommand());
+
+  console.log('output', output);
+
+  // return buildResult(200, {
+  //   type: InteractionResponseType.DeferredChannelMessageWithSource,
+  // } satisfies APIInteractionResponseDeferredChannelMessageWithSource);
+
+  return buildResult(200, {
+    type: InteractionResponseType.ChannelMessageWithSource,
+    data: {
+      content: JSON.stringify(output, null, ' '),
+    },
+  } satisfies APIInteractionResponseChannelMessageWithSource);
 };
 
 /**
@@ -63,9 +88,9 @@ export const handler: Handler<
     return buildResult(401, { error: 'Invalid signature' });
   }
 
-  const body = JSON.parse(event.body as string) as APIInteraction;
+  const body = JSON.parse(event.body as string);
 
-  console.log('Event type:', body.type);
+  console.log('Event type:', body?.type);
 
   if (body.type === InteractionType.Ping) {
     console.log('pong!');
@@ -79,12 +104,7 @@ export const handler: Handler<
     return buildResult(400, { error: 'Unsupported interaction type' });
   }
 
-  console.log('data', body.data);
-
-  return buildResult(200, {
-    type: InteractionResponseType.ChannelMessageWithSource,
-    data: {
-      content: 'Congrats on sending your command!',
-    },
-  } satisfies APIInteractionResponseChannelMessageWithSource);
+  return handleCommand(
+    (body as APIChatInputApplicationCommandInteraction).data
+  );
 };

@@ -32,3 +32,34 @@
 #     }
 #   }
 # }
+
+locals {
+  cloudinit_userdata = templatefile("./cloud-init/cloud-init.yml", {
+    duckdns_domain = var.duckdns_domain
+    duckdns_token = var.duckdns_token
+    duckdns_interval = var.duckdns_interval
+  })
+}
+
+resource "aws_key_pair" "ec2_spot_instance" {
+  key_name = var.instance_key_pair_name
+  public_key = var.instance_key_pair_public_key
+}
+
+# module "ec2_spot_instance" {
+#   source  = "terraform-aws-modules/ec2-instance/aws"
+
+#   name = "${local.title} Spot Instance"
+
+#   create_spot_instance = true
+
+#   instance_type          = "t4g.small"
+#   key_name               = aws_key_pair.ec2_spot_instance.key_name
+#   monitoring             = true
+#   vpc_security_group_ids = [aws_security_group.spot_instance.id]
+#   subnet_id              = module.vpc.public_subnets[0]
+
+#   associate_public_ip_address = true
+
+#   user_data = local.cloudinit_userdata
+# }

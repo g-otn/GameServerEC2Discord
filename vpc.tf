@@ -41,24 +41,48 @@ resource "aws_security_group" "spot_instance" {
 resource "aws_vpc_security_group_ingress_rule" "allow_minecraft" {
   security_group_id = aws_security_group.spot_instance.id
   description = "Allow Minecraft connections"
-  cidr_ipv4         = "0.0.0.0/0"
   from_port         = var.minecraft_port
   to_port           = var.minecraft_port
   ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+
+  tags = {
+    Name = "SGR for Minecraft (${local.title})"
+  }
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   security_group_id = aws_security_group.spot_instance.id
-  description = "Allow SSH"
-  cidr_ipv4         = "0.0.0.0/0"
+  description = "Allow SSH for managing the instance"
   from_port         = 22
   to_port           = 22
   ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+
+  tags = {
+    Name = "SGR for SSH (${local.title})"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "extra_ingress" {
+  for_each = tomap(var.extra_ingress_rules)
+
+  security_group_id = aws_security_group.spot_instance.id
+
+  description = each.value.description
+  from_port   = each.value.from_port
+  to_port     = each.value.to_port
+  ip_protocol = each.value.ip_protocol
+  cidr_ipv4   = each.value.cidr_ipv4
+
+  tags = {
+    Name = "SGR for ${each.key} (${local.title})"
+  }
 }
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   security_group_id = aws_security_group.spot_instance.id
   description = "Allow any outbound IPv4 traffic"
-  cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1" # semantically equivalent to all ports
+  cidr_ipv4         = "0.0.0.0/0"
 }

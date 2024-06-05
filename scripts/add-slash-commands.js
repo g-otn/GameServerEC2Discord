@@ -92,9 +92,9 @@ createGuildCommandBulk([
     name_localizations: {
       'pt-BR': 'iniciar',
     },
-    description: 'Starts the instance which will run the Minecraft server',
+    description: 'Starts the Minecraft server',
     description_localizations: {
-      'pt-BR': 'Inicia a instância que executará o servidor de Minecraft',
+      'pt-BR': 'Inicia o servidor de Minecraft',
     },
   },
   {
@@ -103,11 +103,9 @@ createGuildCommandBulk([
     name_localizations: {
       'pt-BR': 'parar',
     },
-    description:
-      "Stops the instance which is running the Minecraft server, if it's online",
+    description: "Stops the Minecraft server, if it's online",
     description_localizations: {
-      'pt-BR':
-        'Para a instância que está executando o servidor de Minecraft, se estiver online',
+      'pt-BR': 'Desliga o servidor de Minecraft, se estiver online',
     },
   },
   {
@@ -116,24 +114,22 @@ createGuildCommandBulk([
     name_localizations: {
       'pt-BR': 'reiniciar',
     },
-    description:
-      'Reinicia a instância que está executando o servidor, se estiver online.',
+    description: 'Restarts the Minecraft server, se estiver online',
     description_localizations: {
-      'pt-BR':
-        'Reinicia a instância que está executando o servidor de Minecraft, se estiver online',
+      'pt-BR': 'Reinicia o servidor de Minecraft, se estiver online',
     },
   },
   {
     type: 1,
-    name: 'restartminecraft',
+    name: 'full_restart',
     name_localizations: {
-      'pt-BR': 'reiniciarminecraft',
+      'pt-BR': 'reiniciar_tudo',
     },
     description:
-      'Restarts the Minecraft server only, instead of the whole instance (faster)',
+      'Restarts the Minecraft server host (more thorough but slower)',
     description_localizations: {
       'pt-BR':
-        'Reinicia apenas o servidor de Minecraft, em vez de toda a instância (mais rápido)',
+        'Reinicia o host do servidor de Minecraft (mais completo porém lento)',
     },
   },
   {
@@ -142,6 +138,14 @@ createGuildCommandBulk([
     description: 'Shows the server IP',
     description_localizations: {
       'pt-BR': 'Exibe o endereço do servidor',
+    },
+  },
+  {
+    type: 1,
+    name: 'status',
+    description: 'Shows server host status',
+    description_localizations: {
+      'pt-BR': 'Exibe o status do host do servidor',
     },
   },
 ]);

@@ -43,7 +43,7 @@ variable "duckdns_interval" {
 }
 
 variable "minecraft_port" {
-  type = number
+  type    = number
   default = 25565
 }
 
@@ -52,28 +52,57 @@ variable "extra_ingress_rules" {
     description = string
     from_port   = number
     to_port     = number
-    ip_protocol    = string
-    cidr_ipv4 = string
+    ip_protocol = string
+    cidr_ipv4   = string
   }))
   default = {
-    "Simple Voice Chat": {
+    // example
+    "Simple Voice Chat" : {
       description = "Simple Voice Chat mod server"
-      from_port = 24454
-      to_port = 24454
+      from_port   = 24454
+      to_port     = 24454
       ip_protocol = "udp"
-      cidr_ipv4 = "0.0.0.0/0"
+      cidr_ipv4   = "0.0.0.0/0"
     }
   }
 }
 
 variable "instance_key_pair_name" {
   description = "Name of the EC2 Key Pair used to SSH into the instance"
-  type = string
-  default = "minecraft-spot-discord"
+  type        = string
+  default     = "minecraft-spot-discord"
 }
 
 // ssh-keygen -t ed25519 -C "Minecraft Server"
 variable "instance_key_pair_public_key" {
   default = "Public key of the EC2 Key Pair used to SSH into the instance"
-  type = string
+  type    = string
+}
+
+variable "instance_type" {
+  description = "Instance type for the EC2 Spot Instance"
+  type        = string
+  // Please check out:
+  // - https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily
+  // - https://aws.amazon.com/ec2/spot/instance-advisor/
+  default = "t4g.medium"
+}
+
+variable "minecraft_data_volume_size" {
+  description = "The size, in GB of the EBS volume storing the Minecraft server"
+  type        = number
+  default     = 5
+}
+
+variable "cloudinit_minecraft_jvm_xms" {
+  type    = string
+  default = "2850M"
+}
+
+variable "cloudinit_minecraft_jvm_xmx" {
+  // i.e: 
+  // 4GB (instance memory) - 250MB (unavaliable/reserved) - ~200MB (idle OS / misc processes)
+  // - ~300MB for JVM/Java - ~150MB (offset for good measure) = 2850M for JVM heap
+  type    = string
+  default = "2850M"
 }

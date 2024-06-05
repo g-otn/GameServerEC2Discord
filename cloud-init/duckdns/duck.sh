@@ -1,27 +1,28 @@
 #!/bin/bash
 
-# Periodically updates Duck DNS' domain current IP if ec2 public IP has changed.
+# Periodically updates Duck DNS' domain with latest IPv4, if the IP has changed.
 # Based on https://www.duckdns.org/install.jsp#ec2
 
-domains=$DUCKDNS_DOMAIN
-token=$DUCKDNS_TOKEN
-interval="${DUCKDNS_INTERVAL:-5m}"
+domains=${duckdns_domain}
+token=${duckdns_token}
+interval=${duckdns_interval}
 
 current=""
 
 while true; do
 	latest=`ec2-metadata --public-ipv4`
 	
-	echo "$(date --rfc-3339=seconds) | Public IPv4: $latest"
+	echo "Latest public IPv4: $latest"
 
 	if [ "$current" == "$latest" ]
 	then
-		echo "$(date --rfc-3339=seconds) | IP not changed"
+		echo "IP not changed"
 	else
-		echo "$(date --rfc-3339=seconds) | IP has changed - updating"
+		echo "IP has changed - updating"
 		current=$latest
-		echo url="https://www.duckdns.org/update?domains=$domains&token=$token&ip=" | curl -k -o ~/duckdns/duck.log -K -
+		curl -sS -k "https://www.duckdns.org/update?domains=$domains&token=$token&ip="
 	fi
 
+	echo "Waiting $interval"
 	sleep $interval
 done

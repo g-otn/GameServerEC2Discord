@@ -1,0 +1,15 @@
+[Unit]
+Description=Periodically updates Duck DNS' domain with latest IPv4, if the IP has changed
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+ExecStart=/home/ec2-user/duck.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

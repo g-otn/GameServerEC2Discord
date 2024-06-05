@@ -6,6 +6,16 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.52.0"
     }
+
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
+    }
+
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.11.2"
+    }
   }
 }
 
@@ -18,7 +28,7 @@ provider "aws" {
   default_tags {
     tags = {
       Terraform = "true"
-      "minecraft-spot-discord:related": "true"
+      "minecraft-spot-discord:related" : "true"
       "minecraft-spot-discord:server-name" : var.name
     }
   }

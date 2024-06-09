@@ -53,3 +53,6 @@ build
 builds
 
 temp
+
+cloud-init/minecraft/docker-compose.yml
+cloud-init/minecraft/data

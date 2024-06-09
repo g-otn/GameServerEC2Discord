@@ -1,15 +1,11 @@
 #cloud-config
 packages:
   - htop
-  - java-21-amazon-corretto-headless
+  - docker
 
-bootcmd:
-  # cloud-init runs before EBS volume mount, so we have to wait. See https://stackoverflow.com/a/77868589/11138267
-  - echo "$(date --rfc-3339=ns) | Waiting for EBS volume device to be available"
-  - timeout 30s sh -c 'while [ ! -e ${device_name} ]; do sleep 1; done'
-  - echo "$(date --rfc-3339=ns) | Device found"
+timezone: ${timezone}
 
-device_aliases: { "minecraft_data": "${device_name}" }
+device_aliases: { 'minecraft_data': '${device_name}' }
 disk_setup:
   minecraft_data:
     table_type: gpt
@@ -22,37 +18,30 @@ fs_setup:
     partition: any
 
 mounts:
-  - ["minecraft_data", "/srv/minecraft", "xfs", "defaults,nofail", "0", "2"]
+  - [
+      'minecraft_data',
+      '${minecraft_data_path}',
+      'xfs',
+      'defaults,nofail',
+      '0',
+      '2',
+    ]
 
 runcmd:
   - systemctl daemon-reload
   # Finish Duck DNS setup
   - systemctl enable duck.service
   - systemctl start duck.service
-  # Download initial minecraft server data
-  - [
-      curl,
-      -LIsS,
-      "https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/497/downloads/paper-1.20.4-497.jar",
-      -o,
-      "/srv/minecraft/paper.jar",
-    ]
-  - [
-      curl,
-      -LIsS,
-      "https://github.com/vincss/mcEmptyServerStopper/releases/download/v1.1.0/mcEmptyServerStopper-1.1.0.jar",
-      -o,
-      "/srv/minecraft/plugins/mcEmptyServerStopper-1.1.0.jar",
-    ]
-  - chown ec2-user:ec2-user -R /srv/minecraft # Fix permissions
   # Initialize Minecraft server
-  - systemctl enable minecraft.service
-  - systemctl start minecraft.service
+  - chown ec2-user:ec2-user -R ${minecraft_data_path} # Fix permissions
+  # - systemctl enable minecraft.timer
+  # - systemctl start minecraft.timer
+  - docker-compose -f ${minecraft_data_path}/docker-compose.yml up -d
 
 write_files:
   # Duck DNS files
   - path: /home/ec2-user/duck.sh
-    permissions: "0744"
+    permissions: '0744'
     owner: ec2-user
     defer: true
     encoding: base64
@@ -62,26 +51,27 @@ write_files:
     encoding: base64
     content: ${duckdns_service_file_content_b64}
 
-  # Minecraft service
+  # Minecraft files
   - path: /etc/systemd/system/minecraft.service
     defer: true
     encoding: base64
     content: ${minecraft_service_file_content_b64}
-
-  # Minecraft server files
-  - path: /srv/minecraft/start.sh
+  - path: ${minecraft_data_path}/docker-compose.yml
+    permissions: '0744'
     owner: ec2-user
     defer: true
-    permissions: "0744"
     encoding: base64
-    content: ${mc_server_start_sh_file_content_b64}
-  - path: /srv/minecraft/eula.txt
-    owner: ec2-user
+    content: ${minecraft_compose_file_content_b64}
+
+  - path: /home/ec2-user/minecraft_shutdown.sh
     defer: true
-    content: eula=true
-  - path: /srv/minecraft/plugins/EmptyServerStopper/config.yml
-    owner: ec2-user
+    encoding: base64
+    content: ${minecraft_shutdown_script_file_content_b64}
+  - path: /etc/systemd/system/minecraft_shutdown.service
     defer: true
-    content: |
-      ShutdownTime: 11
-      ShutdownAtStart: true
+    encoding: base64
+    content: ${minecraft_shutdown_service_file_content_b64}
+  - path: /etc/systemd/system/minecraft_shutdown.timer
+    defer: true
+    encoding: base64
+    content: ${minecraft_shutdown_timer_file_content_b64}

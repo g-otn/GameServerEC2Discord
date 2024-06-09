@@ -42,11 +42,6 @@ variable "duckdns_interval" {
   default = "5m"
 }
 
-variable "minecraft_port" {
-  type    = number
-  default = 25565
-}
-
 variable "extra_ingress_rules" {
   type = map(object({
     description = string
@@ -55,16 +50,7 @@ variable "extra_ingress_rules" {
     ip_protocol = string
     cidr_ipv4   = string
   }))
-  default = {
-    // example
-    "Simple Voice Chat" : {
-      description = "Simple Voice Chat mod server"
-      from_port   = 24454
-      to_port     = 24454
-      ip_protocol = "udp"
-      cidr_ipv4   = "0.0.0.0/0"
-    }
-  }
+  default = {}
 }
 
 variable "instance_key_pair_name" {
@@ -75,8 +61,14 @@ variable "instance_key_pair_name" {
 
 // ssh-keygen -t ed25519 -C "Minecraft Server"
 variable "instance_key_pair_public_key" {
-  default = "Public key of the EC2 Key Pair used to SSH into the instance"
-  type    = string
+  description = "Public key of the EC2 Key Pair used to SSH into the instance"
+  type        = string
+}
+
+variable "instance_timezone" {
+  description = "Custom timezone for the instance OS set via cloud-init. See timedatectl"
+  type        = string
+  default     = ""
 }
 
 variable "instance_type" {
@@ -94,15 +86,30 @@ variable "minecraft_data_volume_size" {
   default     = 5
 }
 
-variable "cloudinit_minecraft_jvm_xms" {
-  type    = string
-  default = "2850M"
+variable "minecraft_compose_service_top_level_elements" {
+  type    = map(any)
+  default = {}
 }
 
-variable "cloudinit_minecraft_jvm_xmx" {
-  // i.e: 
-  // 4GB (instance memory) - 250MB (unavaliable/reserved) - ~200MB (idle OS / misc processes)
-  // - ~300MB for JVM/Java - ~150MB (offset for good measure) = 2850M for JVM heap
-  type    = string
-  default = "2850M"
+variable "minecraft_port" {
+  type    = number
+  default = 25565
+}
+
+
+variable "minecraft_compose_ports" {
+  type    = set(string)
+  default = ["25565:25565"]
+}
+
+variable "minecraft_compose_environment" {
+  type    = map(string)
+  default = {}
+}
+
+variable "minecraft_compose_limits" {
+  type = map(string)
+  default = {
+    memory : "3500mb"
+  }
 }

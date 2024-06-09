@@ -6,23 +6,64 @@ locals {
   }))
   duckdns_service_file_content_b64 = base64encode(file("./cloud-init/duckdns/duck.service"))
 
+  minecraft_data_path            = "/srv/minecraft"
+  minecraft_compose_service_name = "mc"
+  device_name                    = "/dev/sdm"
+
+  minecraft_shutdown_service_file_content_b64 = base64encode(file(("./cloud-init/minecraft/minecraft_shutdown.service")))
+  minecraft_shutdown_timer_file_content_b64   = base64encode(file("./cloud-init/minecraft/minecraft_shutdown.timer"))
+  minecraft_shutdown_script_file_content_b64 = base64encode(templatefile("./cloud-init/minecraft/minecraft_shutdown.sh", {
+    minecraft_data_path            = local.minecraft_data_path
+    minecraft_compose_service_name = local.minecraft_compose_service_name
+  }))
   minecraft_service_file_content_b64 = base64encode(file(("./cloud-init/minecraft/minecraft.service")))
 
-  mc_server_start_sh_file_content_b64 = base64encode(templatefile("./cloud-init/minecraft/server/start.sh", {
-    xms      = var.cloudinit_minecraft_jvm_xms
-    xmx      = var.cloudinit_minecraft_jvm_xmx
-    jar_file = "paper.jar"
+  minecraft_compose_file_content_b64 = base64encode(yamlencode({
+    "services" : {
+      "mc" : merge({
+        "image" : "itzg/minecraft-server",
+        "tty" : true,
+        "stdin_open" : true,
+        "ports" : var.minecraft_compose_ports,
+        "environment" : merge({
+          "EULA" : "TRUE"
+          "TYPE" : "PAPER"
+
+          "LOG_TIMESTAMP" : true
+          "USE_AIKAR_FLAGS" : true
+
+          "ENABLE_AUTOSTOP" : true
+          "AUTOSTOP_TIMEOUT_EST" : 3600
+          "AUTOSTOP_TIMEOUT_INIT" : 1800
+
+          "VIEW_DISTANCE" : 12
+          "MAX_PLAYERS" : 10
+
+          "INIT_MEMORY" : "2900M"
+          "MAX_MEMORY" : "2900M"
+        }, var.minecraft_compose_environment)
+        "volumes" : [
+          "${local.minecraft_data_path}:/data"
+        ]
+      }, var.minecraft_compose_service_top_level_elements)
+    }
   }))
 
-  device_name = "/dev/sdm"
   ec2_user_data = templatefile("./cloud-init/cloud-init.yml", {
-    device_name = local.device_name
+    timezone = var.instance_timezone
+
+    minecraft_data_path = local.minecraft_data_path
+    device_name         = local.device_name
 
     duckdns_script_file_content_b64  = local.duckdns_script_file_content_b64
     duckdns_service_file_content_b64 = local.duckdns_service_file_content_b64
 
-    minecraft_service_file_content_b64  = local.minecraft_service_file_content_b64
-    mc_server_start_sh_file_content_b64 = local.mc_server_start_sh_file_content_b64
+    minecraft_shutdown_script_file_content_b64  = local.minecraft_shutdown_script_file_content_b64
+    minecraft_shutdown_service_file_content_b64 = local.minecraft_shutdown_service_file_content_b64
+    minecraft_shutdown_timer_file_content_b64   = local.minecraft_shutdown_timer_file_content_b64
+
+    minecraft_service_file_content_b64 = local.minecraft_service_file_content_b64
+    minecraft_compose_file_content_b64 = local.minecraft_compose_file_content_b64
   })
 }
 

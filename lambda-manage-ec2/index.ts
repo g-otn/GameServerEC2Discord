@@ -62,16 +62,11 @@ const handleCommand = async (
 
   console.log('output', output);
 
-  // return buildResult(200, {
-  //   type: InteractionResponseType.DeferredChannelMessageWithSource,
-  // } satisfies APIInteractionResponseDeferredChannelMessageWithSource);
+  // TODO: send sns
 
   return buildResult(200, {
-    type: InteractionResponseType.ChannelMessageWithSource,
-    data: {
-      content: JSON.stringify(output, null, ' '),
-    },
-  } satisfies APIInteractionResponseChannelMessageWithSource);
+    type: InteractionResponseType.DeferredChannelMessageWithSource,
+  } satisfies APIInteractionResponseDeferredChannelMessageWithSource);
 };
 
 /**

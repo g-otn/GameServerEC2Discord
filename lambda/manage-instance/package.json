@@ -1,5 +1,5 @@
 {
-  "name": "lambda-ec2-manager",
+  "name": "lambda-manage-instance",
   "description": "Verifies and handles Discord Interactions slash commands webhooks to manage the server's EC2 instance",
   "version": "1.0.0",
   "main": "build/index.js",
@@ -11,8 +11,7 @@
     "node": ">=20.11.1"
   },
   "dependencies": {
-    "@aws-sdk/client-ec2": "^3.588.0",
-    "discord-verify": "^1.2.0"
+    "@aws-sdk/client-ec2": "^3.592.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.138",

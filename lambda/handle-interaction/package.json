@@ -1,0 +1,24 @@
+{
+  "name": "lambda-ec2-manager",
+  "description": "Verifies and handles Discord Interactions slash commands webhooks to manage the server's EC2 instance",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "scripts": {
+    "start": "tsc && node --env-file=.env .",
+    "build": "esbuild ./index.ts --bundle --platform=node --target=es2022,node20 --outfile=build/index.js --minify --keep-names --legal-comments=inline --line-limit=200"
+  },
+  "engines": {
+    "node": ">=20.11.1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.592.0",
+    "discord-verify": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.138",
+    "discord-api-types": "^0.37.86",
+    "esbuild": "^0.21.4",
+    "typescript": "^5.4.5"
+  },
+  "private": "true"
+}

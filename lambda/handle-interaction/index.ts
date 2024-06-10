@@ -1,4 +1,4 @@
-import { DescribeInstancesCommand, EC2Client } from '@aws-sdk/client-ec2';
+import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import type {
   APIGatewayProxyEventV2,
   APIGatewayProxyResultV2,
@@ -8,9 +8,7 @@ import {
   APIChatInputApplicationCommandInteraction,
   InteractionResponseType,
   InteractionType,
-  type APIInteractionResponseChannelMessageWithSource,
   type APIInteractionResponsePong,
-  APIChatInputApplicationCommandInteractionData,
   APIInteractionResponseDeferredChannelMessageWithSource,
 } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
@@ -22,10 +20,11 @@ import { verify } from 'discord-verify/node';
 //!
 
 const DISCORD_APP_PUBLIC_KEY = process.env.DISCORD_APP_PUBLIC_KEY;
-const MINECRAFT_SERVER_URL = process.env.MINECRAFT_SERVER_URL;
+const MANAGER_INSTRUCTION_SNS_TOPIC_ARN =
+  process.env.MANAGER_INSTRUCTION_SNS_TOPIC_ARN;
 
-if (!DISCORD_APP_PUBLIC_KEY) {
-  throw new Error('Missing public key');
+if (!DISCORD_APP_PUBLIC_KEY || !MANAGER_INSTRUCTION_SNS_TOPIC_ARN) {
+  throw new Error('Missing env vars');
 }
 
 const buildResult = (
@@ -49,20 +48,27 @@ const validate = async (event: APIGatewayProxyEventV2) => {
   );
 };
 
-const handleCommand = async (
-  data: APIChatInputApplicationCommandInteractionData
-): Promise<APIGatewayProxyResultV2> => {
+const handleInteraction = async ({
+  data,
+  token,
+}: APIChatInputApplicationCommandInteraction): Promise<APIGatewayProxyResultV2> => {
   const command = data.name;
 
-  console.log('Handling command', command, 'from interaction', data.id);
+  console.log('Publishing command', command, 'from interaction', data.id);
 
-  const client = new EC2Client({});
+  const client = new SNSClient({});
 
-  const output = await client.send(new DescribeInstancesCommand());
+  const output = await client.send(
+    new PublishCommand({
+      TopicArn: MANAGER_INSTRUCTION_SNS_TOPIC_ARN,
+      Message: JSON.stringify({
+        interaction_continuation_token: token,
+        command,
+      }),
+    })
+  );
 
   console.log('output', output);
-
-  // TODO: send sns
 
   return buildResult(200, {
     type: InteractionResponseType.DeferredChannelMessageWithSource,
@@ -99,7 +105,5 @@ export const handler: Handler<
     return buildResult(400, { error: 'Unsupported interaction type' });
   }
 
-  return handleCommand(
-    (body as APIChatInputApplicationCommandInteraction).data
-  );
+  return handleInteraction(body as APIChatInputApplicationCommandInteraction);
 };

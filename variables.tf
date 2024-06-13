@@ -25,7 +25,13 @@ variable "name" {
 }
 
 variable "discord_public_key" {
-  type = string
+  description = "Discord App public key for webhook authentication"
+  type        = string
+}
+
+variable "discord_bot_token" {
+  description = "Discord App bot token for interaction message updates"
+  type        = string
 }
 
 variable "duckdns_domain" {
@@ -103,13 +109,16 @@ variable "minecraft_compose_ports" {
 }
 
 variable "minecraft_compose_environment" {
-  type    = map(string)
-  default = {}
+  type = map(string)
+  default = {
+    "INIT_MEMORY" : "2900M"
+    "MAX_MEMORY" : "2900M"
+  }
 }
 
 variable "minecraft_compose_limits" {
   type = map(string)
   default = {
-    memory : "3500mb"
+    memory : "3400mb"
   }
 }

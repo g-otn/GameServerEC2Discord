@@ -1,20 +1,3 @@
-resource "aws_iam_policy" "allow_publish_to_manager_instruction_sns_topic" {
-  name        = "AllowPublishToManagerInstructionSNSTopic"
-  description = "Allows publishing messages to the Manager Instruction SNS Topic"
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "sns:Publish"
-        ],
-        Resource = module.manager_instruction_sns_topic.topic_arn
-      }
-    ]
-  })
-}
-
 module "lambda_handle_interaction" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "~> 7.4"
@@ -52,8 +35,7 @@ module "lambda_manage_instance" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
 
-  publish                    = true
-  create_lambda_function_url = true
+  publish = true
 
   source_path = "lambda/manage-instance/build/index.js"
 
@@ -67,5 +49,13 @@ module "lambda_manage_instance" {
   attach_tracing_policy = true
   attach_policies       = true
   number_of_policies    = 1
-  policies              = []
+  policies              = [aws_iam_policy.allow_manage_and_describe_instance.arn]
+}
+
+resource "aws_lambda_permission" "with_sns" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_manage_instance.lambda_function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = module.manager_instruction_sns_topic.topic_arn
 }

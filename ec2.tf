@@ -16,7 +16,9 @@ locals {
     minecraft_data_path            = local.minecraft_data_path
     minecraft_compose_service_name = local.minecraft_compose_service_name
   }))
-  minecraft_service_file_content_b64 = base64encode(file(("./cloud-init/minecraft/minecraft.service")))
+  minecraft_service_file_content_b64 = base64encode(templatefile(("./cloud-init/minecraft/minecraft.service"), {
+    minecraft_data_path = local.minecraft_data_path
+  }))
 
   minecraft_compose_file_content_b64 = base64encode(yamlencode({
     "services" : {
@@ -34,13 +36,10 @@ locals {
 
           "ENABLE_AUTOSTOP" : true
           "AUTOSTOP_TIMEOUT_EST" : 3600
-          "AUTOSTOP_TIMEOUT_INIT" : 1800
+          "AUTOSTOP_TIMEOUT_INIT" : 3600
 
           "VIEW_DISTANCE" : 12
           "MAX_PLAYERS" : 10
-
-          "INIT_MEMORY" : "2900M"
-          "MAX_MEMORY" : "2900M"
         }, var.minecraft_compose_environment)
         "volumes" : [
           "${local.minecraft_data_path}:/data"
@@ -106,7 +105,7 @@ module "ec2_spot_instance" {
   create_spot_instance      = true
   spot_wait_for_fulfillment = true
 
-  ami           = "ami-08a04a1d153bf02a7" // Amazon Linux 2023 AMI 2023.4.20240528.0 arm64 HVM kernel-6.1
+  ami           = "ami-07a5db12eede6ff87" // Amazon Linux 2023 AMI 2023.4.20240611.0 arm64 HVM kernel-6.1
   instance_type = var.instance_type
 
   vpc_security_group_ids      = [aws_security_group.spot_instance.id]

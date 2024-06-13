@@ -5,4 +5,11 @@ module "manager_instruction_sns_topic" {
   name = "${local.title_PascalCase}_ManagerInstruction_Topic"
 
   tracing_config = "Active"
+
+  subscriptions = {
+    lambda_manage_instance = {
+      protocol = "lambda"
+      endpoint = module.lambda_manage_instance.lambda_function_arn
+    }
+  }
 }

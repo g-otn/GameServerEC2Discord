@@ -1,5 +1,5 @@
 [Unit]
-Description=Shutdowns instance if docker compose stack is not running
+Description=Runs Minecraft server docker compose once after docker service init
 After=docker.service
 BindsTo=docker.service
 ReloadPropagatedFrom=docker.service

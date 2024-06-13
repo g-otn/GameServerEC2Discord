@@ -44,6 +44,16 @@ locals {
         "volumes" : [
           "${local.minecraft_data_path}:/data"
         ]
+        "deploy" : {
+          "restart_policy" : {
+            "condition" : "on-failure"
+            "delay" : "2s"
+            "max_attempts" : 3
+          }
+          "resources" : {
+            "limits" : merge({}, var.minecraft_compose_limits)
+          }
+        }
       }, var.minecraft_compose_service_top_level_elements)
     }
   }))

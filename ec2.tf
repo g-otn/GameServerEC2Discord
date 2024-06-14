@@ -28,32 +28,30 @@ locals {
         "stdin_open" : true,
         "ports" : var.minecraft_compose_ports,
         "environment" : merge({
-          "EULA" : "TRUE"
+          "EULA" : true,
+          "SNOOPER_ENABLED" : false,
+
           "TYPE" : "PAPER"
 
           "LOG_TIMESTAMP" : true
           "USE_AIKAR_FLAGS" : true
 
           "ENABLE_AUTOSTOP" : true
-          "AUTOSTOP_TIMEOUT_EST" : 3600
-          "AUTOSTOP_TIMEOUT_INIT" : 3600
+          "AUTOSTOP_TIMEOUT_EST" : 600
+          "AUTOSTOP_TIMEOUT_INIT" : 600
 
           "VIEW_DISTANCE" : 12
-          "MAX_PLAYERS" : 10
+          "MAX_PLAYERS" : 15
         }, var.minecraft_compose_environment)
         "volumes" : [
           "${local.minecraft_data_path}:/data"
         ]
         "deploy" : {
-          "restart_policy" : {
-            "condition" : "on-failure"
-            "delay" : "2s"
-            "max_attempts" : 3
-          }
           "resources" : {
             "limits" : merge({}, var.minecraft_compose_limits)
           }
         }
+        "restart" : "no"
       }, var.minecraft_compose_service_top_level_elements)
     }
   }))

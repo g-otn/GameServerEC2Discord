@@ -50,8 +50,8 @@ runcmd:
   - chown ec2-user:ec2-user -R ${minecraft_data_path} # Fix permissions
   - systemctl enable minecraft
   - systemctl start minecraft
-  - systemctl enable minecraft_shutdown
-  - systemctl start minecraft_shutdown
+  - systemctl enable minecraft_shutdown.timer
+  - systemctl start minecraft_shutdown.timer
 
 write_files:
   # Duck DNS files

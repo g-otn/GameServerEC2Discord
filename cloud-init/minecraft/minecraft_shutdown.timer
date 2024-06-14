@@ -6,3 +6,6 @@ After=minecraft.service
 OnBootSec=1min
 OnUnitActiveSec=1min
 Unit=minecraft_shutdown.service
+
+[Install]
+WantedBy=timers.target

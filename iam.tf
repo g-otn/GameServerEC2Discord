@@ -33,7 +33,7 @@ resource "aws_iam_policy" "allow_manage_and_describe_instance" {
       {
         "Effect" : "Allow",
         "Action" : "ec2:DescribeInstances",
-        "Resource" : local.spot_instance_arn
+        "Resource" : "*" // https://stackoverflow.com/a/36768898/11138267
       }
     ]
   })

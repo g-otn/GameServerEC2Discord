@@ -11,11 +11,13 @@
     "node": ">=20.11.1"
   },
   "dependencies": {
-    "@aws-sdk/client-ec2": "^3.592.0"
+    "@aws-sdk/client-ec2": "^3.592.0",
+    "aws-xray-sdk-core": "^3.9.0",
+    "aws-xray-sdk-fetch": "^3.9.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.138",
-    "discord-api-types": "^0.37.86",
+    "discord-api-types": "^0.37.89",
     "esbuild": "^0.21.4",
     "typescript": "^5.4.5"
   },

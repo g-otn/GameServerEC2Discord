@@ -12,6 +12,7 @@ import {
   APIInteractionResponseDeferredChannelMessageWithSource,
 } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
+import { captureAWSv3Client } from 'aws-xray-sdk-core';
 
 // comment for debugging bundle
 //!
@@ -38,6 +39,8 @@ const buildResult = (
   };
 };
 
+const sns = captureAWSv3Client(new SNSClient({}));
+
 const validate = async (event: APIGatewayProxyEventV2) => {
   return verify(
     event.body,
@@ -50,19 +53,19 @@ const validate = async (event: APIGatewayProxyEventV2) => {
 
 const handleInteraction = async ({
   data,
+  id,
   token,
 }: APIChatInputApplicationCommandInteraction): Promise<APIGatewayProxyResultV2> => {
   const command = data.name;
 
   console.log('Publishing command', command, 'from interaction', data.id);
 
-  const client = new SNSClient({});
-
-  const output = await client.send(
+  const output = await sns.send(
     new PublishCommand({
       TopicArn: MANAGER_INSTRUCTION_SNS_TOPIC_ARN,
       Message: JSON.stringify({
-        interaction_continuation_token: token,
+        interaction_id: id,
+        interaction_token: token,
         command,
       }),
     })

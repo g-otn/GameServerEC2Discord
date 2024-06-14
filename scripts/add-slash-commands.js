@@ -39,7 +39,7 @@ const deleteGuildCommand = async (id) => {
 };
 
 /**
- * @param {import('../lambda-manage-ec2/node_modules/discord-api-types/rest/v10').RESTPostAPIChatInputApplicationCommandsJSONBody} data
+ * @param {import('../lambda/handle-interaction/node_modules/discord-api-types/rest/v10').RESTPostAPIChatInputApplicationCommandsJSONBody} data
  */
 const createGuildCommand = async (data) => {
   const res = await fetch(
@@ -59,7 +59,7 @@ const createGuildCommand = async (data) => {
 };
 
 /**
- * @param {import('../lambda-manage-ec2/node_modules/discord-api-types/rest/v10').RESTPutAPIApplicationGuildCommandsJSONBody} data
+ * @param {import('../lambda/handle-interaction/node_modules/discord-api-types/rest/v10').RESTPutAPIApplicationGuildCommandsJSONBody} data
  */
 const createGuildCommandBulk = async (data) => {
   const res = await fetch(
@@ -121,23 +121,10 @@ createGuildCommandBulk([
   },
   {
     type: 1,
-    name: 'full_restart',
-    name_localizations: {
-      'pt-BR': 'reiniciar_tudo',
-    },
-    description:
-      'Restarts the Minecraft server host (more thorough but slower)',
-    description_localizations: {
-      'pt-BR':
-        'Reinicia o host do servidor de Minecraft (mais completo porém lento)',
-    },
-  },
-  {
-    type: 1,
     name: 'ip',
-    description: 'Shows the server IP',
+    description: 'Shows the server IP address',
     description_localizations: {
-      'pt-BR': 'Exibe o endereço do servidor',
+      'pt-BR': 'Exibe o endereço IP do servidor',
     },
   },
   {
@@ -145,7 +132,7 @@ createGuildCommandBulk([
     name: 'status',
     description: 'Shows server host status',
     description_localizations: {
-      'pt-BR': 'Exibe o status do host do servidor',
+      'pt-BR': 'Exibe o estado do host do servidor',
     },
   },
 ]);

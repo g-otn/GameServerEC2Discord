@@ -12,11 +12,12 @@
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.592.0",
+    "aws-xray-sdk-core": "^3.9.0",
+    "discord-api-types": "^0.37.86",
     "discord-verify": "^1.2.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.138",
-    "discord-api-types": "^0.37.86",
     "esbuild": "^0.21.4",
     "typescript": "^5.4.5"
   },

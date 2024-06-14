@@ -17,13 +17,13 @@ module "lambda_handle_interaction" {
 
   environment_variables = {
     MANAGER_INSTRUCTION_SNS_TOPIC_ARN = module.manager_instruction_sns_topic.topic_arn
-    DISCORD_APP_PUBLIC_KEY            = var.discord_public_key
+    DISCORD_APP_PUBLIC_KEY            = var.discord_app_public_key
   }
 
   attach_tracing_policy = true
   attach_policies       = true
-  number_of_policies    = 1
-  policies              = [aws_iam_policy.allow_publish_to_manager_instruction_sns_topic.arn]
+  number_of_policies    = 2
+  policies              = [aws_iam_policy.allow_publish_to_manager_instruction_sns_topic.arn, "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"]
 }
 
 module "lambda_manage_instance" {
@@ -43,13 +43,18 @@ module "lambda_manage_instance" {
   tracing_mode                      = "Active"
 
   environment_variables = {
-    DISCORD_APP_PUBLIC_KEY = var.discord_public_key
+    DISCORD_APP_ID         = var.discord_app_id
+    DISCORD_APP_PUBLIC_KEY = var.discord_app_public_key
+    DISCORD_BOT_TOKEN      = var.discord_bot_token
+    DUCKDNS_DOMAIN         = var.duckdns_domain
+    MINECRAFT_PORT         = var.minecraft_port
+    INSTANCE_ID            = module.ec2_spot_instance.spot_instance_id
   }
 
   attach_tracing_policy = true
   attach_policies       = true
-  number_of_policies    = 1
-  policies              = [aws_iam_policy.allow_manage_and_describe_instance.arn]
+  number_of_policies    = 2
+  policies              = [aws_iam_policy.allow_manage_and_describe_instance.arn, "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"]
 }
 
 resource "aws_lambda_permission" "with_sns" {

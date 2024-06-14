@@ -24,14 +24,20 @@ variable "name" {
   default     = "Minecraft Server"
 }
 
-variable "discord_public_key" {
-  description = "Discord App public key for webhook authentication"
+variable "discord_app_id" {
+  default = "Discord App ID for webhook API usage"
+  type    = string
+}
+
+variable "discord_app_public_key" {
+  description = "Discord App public key for webhook validation"
   type        = string
 }
 
 variable "discord_bot_token" {
   description = "Discord App bot token for interaction message updates"
   type        = string
+  sensitive   = true
 }
 
 variable "duckdns_domain" {
@@ -83,7 +89,7 @@ variable "instance_type" {
   // Please check out:
   // - https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily
   // - https://aws.amazon.com/ec2/spot/instance-advisor/
-  default = "t4g.medium"
+  default = "t4g.large"
 }
 
 variable "minecraft_data_volume_size" {
@@ -111,14 +117,14 @@ variable "minecraft_compose_ports" {
 variable "minecraft_compose_environment" {
   type = map(string)
   default = {
-    "INIT_MEMORY" : "1024M"
-    "MAX_MEMORY" : "2600M"
+    "INIT_MEMORY" : "6000M"
+    "MAX_MEMORY" : "6000M"
   }
 }
 
 variable "minecraft_compose_limits" {
   type = map(string)
   default = {
-    memory : "3600mb"
+    memory : "7500mb"
   }
 }

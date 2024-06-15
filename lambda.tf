@@ -6,6 +6,7 @@ module "lambda_handle_interaction" {
   description   = "Handles Discord slash commands interactions to manage the server's instance"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
+  architectures = ["arm64"]
 
   publish                    = true
   create_lambda_function_url = true
@@ -34,6 +35,7 @@ module "lambda_manage_instance" {
   description   = "Execute commands to manage EC2 instance and updates Discord interaction follow-up message"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
+  architectures = ["arm64"]
 
   publish = true
 

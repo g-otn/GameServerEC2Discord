@@ -7,12 +7,8 @@ import {
 } from '@aws-sdk/client-ec2';
 import type { Handler, SNSEvent } from 'aws-lambda';
 import { captureAWSv3Client } from 'aws-xray-sdk-core';
-import {
-  InteractionResponseType,
-  RESTPatchAPIInteractionOriginalResponseJSONBody,
-  type RESTPostAPIInteractionCallbackJSONBody,
-} from 'discord-api-types/v10';
 import { captureFetchGlobal } from 'aws-xray-sdk-fetch';
+import { RESTPatchAPIInteractionOriginalResponseJSONBody } from 'discord-api-types/v10';
 
 // comment for debugging bundle
 //!
@@ -73,9 +69,13 @@ const sendEC2Command = async (instanceId: string, command: string) => {
 
           return (
             `Addresses:\n` +
-            `- **\`${PublicIpAddress}:${MINECRAFT_PORT}\`**\n` +
-            `- \`${PublicDnsName}:${MINECRAFT_PORT}\`\n` +
-            `- \`${DUCKDNS_DOMAIN}.duckdns.org:${MINECRAFT_PORT}\``
+            (PublicIpAddress
+              ? `- **\`${PublicIpAddress}:${MINECRAFT_PORT}\`**\n`
+              : '') +
+            (PublicDnsName
+              ? `- \`${PublicDnsName}:${MINECRAFT_PORT}\`\n`
+              : '') +
+            `- \`${DUCKDNS_DOMAIN}.duckdns.org:${MINECRAFT_PORT}\` (Dynamic)`
           );
         });
     default:

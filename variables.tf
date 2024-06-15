@@ -117,14 +117,14 @@ variable "minecraft_compose_ports" {
 variable "minecraft_compose_environment" {
   type = map(string)
   default = {
-    "INIT_MEMORY" : "6000M"
-    "MAX_MEMORY" : "6000M"
+    "INIT_MEMORY" : "5900M"
+    "MAX_MEMORY" : "5900M"
   }
 }
 
 variable "minecraft_compose_limits" {
   type = map(string)
   default = {
-    memory : "7500mb"
+    memory : "7400mb"
   }
 }

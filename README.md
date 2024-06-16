@@ -4,6 +4,28 @@ Spin up a cheap EC2 Spot instance to host a Minecraft server managed by Discord 
 
 Made for a personal and small server with few players.
 
+## Table of Contents
+
+- [Strategy](#strategy)
+- [Workflow](#workflow)
+- [Diagram](#diagram)
+- [Cost breakdown](#cost-breakdown)
+- [Prerequisites](#prerequisites)
+- [Setup](#Setup)
+  - [Initial setup](#initial-setup)
+  - [Terraform variables](#terraform-variables)
+    - [Ports](#ports)
+    - [Instance type](#instance-type)
+    - [Recommended RAM](#recommended-ram)
+    - [Recommended Minecraft server plugins](#recommended-Minecraft-server-plugins)
+  - [Applying](#applying)
+  - [Discord interactions](#discord-interactions)
+- [Testing and troubleshooting](#testing-and-troubleshooting)
+  - [CloudWatch and X-Ray](#cloudwatch-and-x-ray)
+  - [Useful commands](#useful-commands)
+- [To-do](#to-do)
+- [Notes and acknowledgements](#notes-and-acknowledgements)
+
 ## Strategy
 
 The idea is reduce costs by basically:
@@ -56,13 +78,13 @@ The process works as follow:
 
 ### Notable expenses
 
-| Service   | Sub-service / description                                                                                         | Price/hour  | Price 30h/month |
-| --------- | ----------------------------------------------------------------------------------------------------------------- | ----------- | --------------- |
-| EC2       | [`t4g.large`](https://instances.vantage.sh/aws/ec2/t4g.large) **spot** instance                                   | $0.0128     | $0.384          |
-| EBS       | 10GB volume for Minecraft data                                                                                    | $0.00109    | $0.032          |
-| EBS       | Daily volume snapshots, for backup                                                                                | -           | ~$0.03          |
-| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/) | $0.005      | $0.015          |
-| **Total** |                                                                                                                   | **$0.0189** | **$0.461**      |
+| Service   | Sub-service / description                                                                                                                                                                                  | Price/hour  | Price 30h/month |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | --------------- |
+| EC2       | [`t4g.large`](https://instances.vantage.sh/aws/ec2/t4g.large?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.0128     | $0.384          |
+| EBS       | 10GB volume for Minecraft data                                                                                                                                                                             | $0.00109    | $0.032          |
+| EBS       | Daily volume snapshots, for backup                                                                                                                                                                         | -           | ~$0.03          |
+| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                          | $0.005      | $0.015          |
+| **Total** |                                                                                                                                                                                                            | **$0.0189** | **$0.461**      |
 
 ### Negligible expenses / Free
 
@@ -72,22 +94,143 @@ Costs that are $0.01 or less per month. See AWS Pricing Calculator estimate.
 
 ## Prerequisites
 
+- An AWS account and associated credentials for Terraform to create resources
 - An Discord app on the [Developer portal](https://discord.com/developers/applications)
 - A [Duck DNS](https://www.duckdns.org/about.jsp) account and domain
+- A SSH keypair for SSH-ing into your instance (e.g `ssh-keygen -t ed25519 -C "minecraft-spot-discord"`)
 
-## Running
+## Setup
 
 Requirements: Terraform, Python 3.6+ (due to [terraform-aws-lambda](https://github.com/terraform-aws-modules/terraform-aws-lambda)), Node 18+ (to compile Lambda functions)
 
-TODO
+### Initial setup
 
-### Example `terraform.tfvars`
+1. Clone and navigate to the project:
 
-### Notes
+```bash
+git clone https://github.com/g-otn/minecraft-spot-discord.git && cd minecraft-spot-discord
+```
+
+2. Initialize Terraform:
+
+```
+terraform init
+```
+
+3.  Manually build the lambda functions _(`terraform-aws-lambda` was breaking a lot during plan/apply)_
+
+```
+npm i
+npm run build --workspaces
+```
+
+### Terraform variables
+
+4. Create a file named `terraform.tfvars` and fill the required variables.
+   - Check [`variables.tf`](variables.tf) to see which variables are required and their descriptions
+   - Check [`example.tfvars`](example.tfvars) for a full example
+
+#### Ports
+
+Any extra port you want to open needs to be set both in `extra-ingress-rules` and `minecraft_compose_ports` variables in a way in which they match.
+
+Note that by default the Minecraft container exposes port 25565, so if you want to run the server in another port you should either change only the host port (like `12345:25565` where 12345 is the custom port) or change the [`SERVER_PORT` variable](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#server).
+
+#### Instance type
+
+I'd recommend nothing less than 1 vCPU and 4GB RAM.
+This project was mainly tested and monitored with a [`t4g.large`](https://instances.vantage.sh/aws/ec2/t4g.large?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large&os=linux&reserved_term=Standard.noUpfront) instance.
+
+Please check out:
+
+- The [Vantage](https://instances.vantage.sh/?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large) website
+  - Tip: Hide Name, `Windows`-related, Network Performance, On-demand and Reserved columns; Show all `Linux Spot`-related and `Clock Speed` columns; Sort by `Linux Spot Average cost`
+- [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/)
+
+#### Recommended RAM
+
+In the variables you can set the JVM Heap size (`Xms` and `Xmx` options) via the `minecraft_compose_environment` variable - [`INIT/MAX_MEMORY`](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#general-options) option
+and the Docker deploy resource memory limit before the OS kills your container via `minecraft_compose_limits` - [`memory`](https://docs.docker.com/compose/compose-file/deploy/#resources). See [`example.tfvars`](example.tfvars)
+
+Firstly, around 200MB is not really available in the instance for usage.
+
+Then I recommended
+reserving at least 300MB for idle OS, Docker, etc to try prevent the instance from freezing. The remaining will be your Docker memory limit for the container. You could also not set a Docker limit at all.
+
+Finally, save around 600MB-1.5GB for the JVM / Off-heap memory.
+
+| Instance memory | Available memory | Docker limit | Heap size | Recommended players (Vanilla) |
+| --------------- | ---------------- | ------------ | --------- | ----------------------------- |
+| 2GB             | 1.8GB            | 1.5GB        | 0.9GB     | 1-2                           |
+| 4GB             | 3.8GB            | 3.5GB        | 2.7GB     | 1-4                           |
+| 8GB             | 7.8GB            | 7.5GB        | 6GB       | 2-8                           |
+
+#### Recommended Minecraft server plugins
+
+- [DiscordSRV](https://modrinth.com/plugin/discordsrv) - We're already using Discord, so why not? However it seems this plugin overrides the interactions, so you'll have to create another Discord app on the developer portal just for this. See [Installation](https://docs.discordsrv.com/installation/initial-setup)
+- [AFK-Kicker](https://modrinth.com/plugin/afk-kicker) - Or any other plugin which can kick afk players, so the server doesn't stays on if nobody is playing
+- [TabTPS](https://modrinth.com/plugin/tabtps) - Or any other plugin for easy in-game information display of server load, etc
+
+### Applying
+
+5. Run `terraform plan` and revise the resources to be created
+
+6. Run `terraform apply` after a while the instance and the game server should be running and accessible
+
+### Discord interactions
+
+7. Go to the Lambda console on the region you chose, find the `interaction-handler` Lambda and copy it's Function URL.
+
+8. Go to your Application on the [Discord Developer portal](https://discord.com/developers/applications) > General Information and paste the URL into `Interactions Endpoint URL` and click save.
+
+9. Invite your app to a specific Discord server (guild) using the OAuth2 link found at Installation. Make sure `applications.commands` is set in the Default Install Settings.
+
+10. In the project, navigate to `scripts` and create a `.env` file
+
+```
+cd scripts
+touch .env
+```
+
+11. Fill the environment variables required by [`add-slash-commands.js`](scripts/add-slash-commands.js):
+
+```ini
+DISCORD_APP_ID=123456789
+DISCORD_APP_GUILD_ID=3123456789
+DISCORD_APP_BOT_TOKEN=MTABCDE
+```
+
+Guild ID is the Discord server ID, app ID and bot token can be found in the [Discord Developer Portal](https://discord.com/developers/applications/).
+
+12. Run the script while loading the `.env` file. The script should call the Discord API and register the slash command interactions which the Lambda is ready to handle to that specific Discord server:
+
+```
+node --env-file=.env add-slash-commands.js
+```
+
+13. You should now be able to use the `/start`, `/stop`, `/restart`, `/ip` or `/status` commands into one of the text channels to manage the instance.
+    - You may need do additional permission/role setup depending on your Discord server configuration (i.e if the app can't use the text channel)
 
 ## Testing and troubleshooting
 
-https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sns.html#xray-services-sns-configuration
+#### CloudWatch and X-Ray
+
+CloudWatch log groups are created for the Lambda and VPC flow logs.
+
+X-Ray tracing is also enabled, however you need to [manually set up SNS](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sns.html#xray-services-sns-configuration) permissions so the traces show up correctly in the Trace Map / etc.
+
+#### Useful commands
+
+Game data EBS volume is mounted at `/srv/minecraft`;
+Compose container name is `minecraft-mc-1`.
+
+Inside the instance:
+
+- `htop`
+- `docker stats`: Visualize current RAM usage vs the limit
+- [`docker attach minecraft-mc-1`](https://docker-minecraft-server.readthedocs.io/en/latest/commands/#enabling-interactive-console): attach terminal to Minecraft server console
+- `docker logs minecraft-mc-1 -f`: Latest logs from the container
+- `sudo systemctl stop minecraft_shutdown.timer`: Stops the systemd timer which prevents the instance from being shut down automatically until next reboot. Don't forget to shutdown manually or start the timer again!
 
 ## To-do
 
@@ -96,6 +239,7 @@ I may or may not do these in the future:
 - Isolate the reusable resources into a Terraform module so it's easy to spin more than one instance - similar to [mamoit/minecraft-ondemand-terraform](https://github.com/mamoit/minecraft-ondemand-terraform)
 - Make it generic so other games are supported - similar to [Lemmons/minecraft-spot](https://github.com/Lemmons/minecraft-spot)
   - Create some generic solution for auto-stop, watching active connections etc.
+- Create CloudWatch dashboard via Terraform
 
 ## Notes and acknowledgements
 
@@ -104,6 +248,7 @@ This project was made for studying purposes mainly. The following repos and arti
 - [doctorray117/minecraft-ondemand](https://github.com/doctorray117/minecraft-ondemand) - The main motivation for this project, I wanted to do something similar but less complex and even cheaper (without Route 53, EFS, DataSync, Twilio and Minecraft watchdog)
 - [JKolios/minecraft-ondemand-terraform](https://github.com/JKolios/minecraft-ondemand-terraform) - Gave me an general idea of what I had to do
 - [mamoit/minecraft-ondemand-terraform](https://github.com/mamoit/minecraft-ondemand-terraform) - I almost went with this solution instead of creating my own, but I wanted to use EC2 directly instead of ECS + Fargate for slightly cheaper costs
+- [Lemmons/minecraft-spot](https://github.com/Lemmons/minecraft-spot/) - Some Cloud-init and Terraform reference
 - [vincss/mcEmptyServerStopper](https://github.com/vincss/mcEmptyServerStopper) - I was using this before I migrated to Docker and [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server)
 - [Giving kids control of an EC2 instance via discord
   ](https://drpump.github.io/ec2-discord-bot/) - Gave me the push to use Discord to reduce costs and simplify some of the workflow, and almost made me use GCP instead of AWS.

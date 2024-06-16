@@ -1,25 +1,29 @@
 variable "aws_access_key" {
-  type      = string
-  sensitive = true
+  description = "AWS Access Key for AWS provider"
+  type        = string
+  sensitive   = true
 }
 
 variable "aws_secret_key" {
-  type      = string
-  sensitive = true
+  description = "AWS Secret Key for AWS provider"
+  type        = string
+  sensitive   = true
 }
 
 variable "aws_region" {
-  type    = string
-  default = "us-east-2"
+  description = "Region where to create the resources, choose one with cheap EC2 Spot prices"
+  type        = string
+  default     = "us-east-2"
 }
 
 variable "subnet_az" {
-  type    = string
-  default = "us-east-2a"
+  description = "Specific availability zone where to create the subnet, instance, EBS volumes and other VPC resources"
+  type        = string
+  default     = "us-east-2a"
 }
 
 variable "name" {
-  description = "Short name for use in resources"
+  description = "Short name to identify created resources. To be safe, only 15 characters or less, alphanumeric character and spaces"
   type        = string
   default     = "Minecraft Server"
 }
@@ -41,20 +45,24 @@ variable "discord_bot_token" {
 }
 
 variable "duckdns_domain" {
-  type = string
+  description = "The name of the subdomain (not the full hostname/URL) registered in Duck DNS"
+  type        = string
 }
 
 variable "duckdns_token" {
-  type      = string
-  sensitive = true
+  description = "Duck DNS token"
+  type        = string
+  sensitive   = true
 }
 
 variable "duckdns_interval" {
-  type    = string
-  default = "5m"
+  description = "Interval for the shell script to update the IP. Shouldn't matter much"
+  type        = string
+  default     = "5m"
 }
 
 variable "extra_ingress_rules" {
+  description = "Ingress rules to add to the instance security group, required if a plugin requires a specific port open"
   type = map(object({
     description = string
     from_port   = number
@@ -84,12 +92,9 @@ variable "instance_timezone" {
 }
 
 variable "instance_type" {
-  description = "Instance type for the EC2 Spot Instance"
+  description = "Instance type for the EC2 Spot Instance. See https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily"
   type        = string
-  // Please check out:
-  // - https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily
-  // - https://aws.amazon.com/ec2/spot/instance-advisor/
-  default = "t4g.large"
+  default     = "t4g.large"
 }
 
 variable "minecraft_data_volume_size" {
@@ -99,31 +104,35 @@ variable "minecraft_data_volume_size" {
 }
 
 variable "minecraft_compose_service_top_level_elements" {
-  type    = map(any)
-  default = {}
+  description = "Override/add other elements to the Minecraft server compose service"
+  type        = map(any)
+  default     = {}
 }
 
 variable "minecraft_port" {
-  type    = number
-  default = 25565
+  description = "Main Minecraft port, if you change this, you must change the related variables too"
+  type        = number
+  default     = 25565
 }
 
-
 variable "minecraft_compose_ports" {
-  type    = set(string)
-  default = ["25565:25565"]
+  description = "See https://docker-minecraft-server.readthedocs.io/en/latest/#using-docker-compose"
+  type        = set(string)
+  default     = ["25565:25565"]
 }
 
 variable "minecraft_compose_environment" {
-  type = map(string)
+  description = "See https://docker-minecraft-server.readthedocs.io/en/latest/variables"
+  type        = map(string)
   default = {
-    "INIT_MEMORY" : "5900M"
-    "MAX_MEMORY" : "5900M"
+    "INIT_MEMORY" : "6000M"
+    "MAX_MEMORY" : "6000M"
   }
 }
 
 variable "minecraft_compose_limits" {
-  type = map(string)
+  description = "See https://docs.docker.com/compose/compose-file/deploy/#resources"
+  type        = map(string)
   default = {
     memory : "7400mb"
   }

@@ -1,6 +1,6 @@
 {
   "name": "lambda-manage-instance",
-  "description": "Verifies and handles Discord Interactions slash commands webhooks to manage the server's EC2 instance",
+  "description": "Handle server commands to manage EC2 instance",
   "version": "1.0.0",
   "main": "build/index.js",
   "scripts": {

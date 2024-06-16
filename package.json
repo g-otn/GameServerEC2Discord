@@ -1,0 +1,6 @@
+{
+  "workspaces": [
+    "./lambda/handle-interaction",
+    "./lambda/manage-instance"
+  ]
+}

@@ -10,6 +10,9 @@ Made for a personal and small server with few players.
 - [Workflow](#workflow)
 - [Diagram](#diagram)
 - [Cost breakdown](#cost-breakdown)
+  - [Notable expenses](#notable-expenses)
+  - [12-month Free Tier](#12-month-free-tier)
+  - [Always Free offers](#always-free-offers)
 - [Prerequisites](#prerequisites)
 - [Setup](#Setup)
   - [Initial setup](#initial-setup)
@@ -64,33 +67,46 @@ The process works as follow:
 
 ## Cost breakdown
 
-**TL;DR: USD 0.5 for 30h of gameplay per month** on a 2x 2.5GHz vCPU, 8GB RAM instance
+**TL;DR: Between 0.4 to 1.1 USD for 30h of gameplay** for 2 vCPU with 2.5GHz and 8GB RAM
 
-- **[AWS Princing Calculator estimate]()**
+- **[AWS Princing Calculator estimate](https://calculator.aws/#/estimate?id=f3e231e532d196d04bf96b199fcfe1621cc3bb91)**
   - Does not include Public IP cost, see table below
 - Last updated: June 2024
 - Region assumed is `us-east-2` (Ohio)
 - Prices are in USD
 - Assumes usage of [Always Free](https://aws.amazon.com/free/?nc2=h_ql_pr_ft&all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers (different from 12 month Free Tier)
   - This is important mostly due to the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. Otherwise due to the current price rates and regular gameplay network usage, it would cost more than the instance itself
-- EC2 prices (in the table below) do not account for surplus vCPU usage credits charges. See [Earn CPU credits](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html#earning-CPU-credits) and [When to use unlimited mode versus fixed CPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#when-to-use-unlimited-mode). So treat it as a minimum for unlimited-mode burstable instance types
-  - You can always change the instance type if you don't need ~6GB of JVM heap size for your server. Don't forget to change the other related Terraform variables!
+- For the EC2 prices (in the table below), keep in mind about:
+  - Surplus vCPU usage credits charges when using burstable instances in unlimited mode (default). See [Earn CPU credits](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html#earning-CPU-credits) and [When to use unlimited mode versus fixed CPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#when-to-use-unlimited-mode).
+    - Basically, don't play at heavy CPU usage continuously for TOO long when using those instances types.
+  - Spot prices change:
+    - With time
+    - Depending on the selected availability zone.
+      See Spot Instance pricing history in "AWS Console > EC2 > Instances > Spot Requests > Pricing History" to see if this variation is significant and to choose the current best availability zone for you.
+  - You can always change the instance type, don't forget to change the other related Terraform variables!
 
 ### Notable expenses
 
-| Service   | Sub-service / description                                                                                                                                                                                  | Price/hour  | Price 30h/month |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | --------------- |
-| EC2       | [`t4g.large`](https://instances.vantage.sh/aws/ec2/t4g.large?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.0128     | $0.384          |
-| EBS       | 10GB volume for Minecraft data                                                                                                                                                                             | $0.00109    | $0.032          |
-| EBS       | Daily volume snapshots, for backup                                                                                                                                                                         | -           | ~$0.03          |
-| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                          | $0.005      | $0.015          |
-| **Total** |                                                                                                                                                                                                            | **$0.0189** | **$0.461**      |
+| Service   | Sub-service / description                                                                                                                                                                                  | Price/hour | Price 30h/month |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| EC2       | [`t4g.large`](https://instances.vantage.sh/aws/ec2/t4g.large?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.02379   | $0.531          |
+| EBS       | 10GB volume for Minecraft data                                                                                                                                                                             | $0.00109   | $0.032          |
+| EBS       | Daily volume snapshots, for backup                                                                                                                                                                         | -          | ~$0.03          |
+| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                          | $0.005     | $0.015          |
+| **Total** |                                                                                                                                                                                                            | **$0.029** | **$0.578**      |
 
-### Negligible expenses / Free
+### 12-month Free Tier
+
+If you have access to the 12-month Free tier, you should automatically benefit from the following offers:
+
+- [750h of free Public IPv4 address](https://aws.amazon.com/about-aws/whats-new/2024/02/aws-free-tier-750-hours-free-public-ipv4-addresses)
+
+### Always Free offers
+
+Some of the services used are more than covered by the ["always free"](https://aws.amazon.com/free/?all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers,
+namely:
 
 Lambda; SNS; KMS; CloudWatch / X-Ray; Network data transfer from EC2 to internet.
-
-Costs that are $0.01 or less per month. See AWS Pricing Calculator estimate.
 
 ## Prerequisites
 
@@ -157,13 +173,13 @@ Firstly, around 200MB is not really available in the instance for usage.
 Then I recommended
 reserving at least 300MB for idle OS, Docker, etc to try prevent the instance from freezing. The remaining will be your Docker memory limit for the container. You could also not set a Docker limit at all.
 
-Finally, save around 600MB-1.5GB for the JVM / Off-heap memory.
+Finally, save around 600MiB-1.5GiB for the JVM / Off-heap memory.
 
 | Instance memory | Available memory | Docker limit | Heap size | Recommended players (Vanilla) |
 | --------------- | ---------------- | ------------ | --------- | ----------------------------- |
-| 2GB             | 1.8GB            | 1.5GB        | 0.9GB     | 1-2                           |
-| 4GB             | 3.8GB            | 3.5GB        | 2.7GB     | 1-4                           |
-| 8GB             | 7.8GB            | 7.5GB        | 6GB       | 2-8                           |
+| 2GiB            | 1.8GiB           | **1.6GB**    | **1GB**   | 1-2                           |
+| 4GiB            | 3.8GiB           | **3.6GB**    | **2.8GB** | 1-4                           |
+| 8GiB            | 7.8GiB           | **7.6GB**    | **6.1GB** | 2-8                           |
 
 #### Recommended Minecraft server plugins
 

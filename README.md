@@ -193,8 +193,6 @@ Finally, save around 600MiB-1.5GiB for the JVM / Off-heap memory.
 
 6. Run `terraform apply` after a while the instance and the game server should be running and accessible
 
-Note: In subsequent applies, it will always [force replacement of the instance if the instance is not running](https://stackoverflow.com/q/52519463/11138267). This doesn't matter much because the game data is not stored in the root volume which will be replaced, but it'll affect vCPU credits and CloudWatch metrics since it'll be a new instance, and means any manual changes and files written to the OS outside the game data volume will be lost. A workaround is to just leave the instance running while applying.
-
 ### Discord interactions
 
 7. Go to the Lambda console on the region you chose, find the `interaction-handler` Lambda and copy it's Function URL.

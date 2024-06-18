@@ -100,7 +100,7 @@ variable "instance_type" {
 variable "minecraft_data_volume_size" {
   description = "The size, in GB of the EBS volume storing the Minecraft server"
   type        = number
-  default     = 5
+  default     = 10
 }
 
 variable "minecraft_compose_service_top_level_elements" {

@@ -28,7 +28,10 @@ resource "aws_iam_policy" "allow_manage_and_describe_instance" {
           "ec2:StartInstances",
           "ec2:StopInstances"
         ],
-        "Resource" : local.spot_instance_arn
+        "Resource" : "arn:aws:ec2:${var.aws_region}:*:instance/*",
+        "Condition" : {
+          "StringEquals" : { "aws:ResourceTag/minecraft-spot-discord:related" : "true" }
+        }
       },
       {
         "Effect" : "Allow",

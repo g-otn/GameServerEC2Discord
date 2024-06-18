@@ -72,6 +72,14 @@ locals {
     minecraft_service_file_content_b64 = local.minecraft_service_file_content_b64
     minecraft_compose_file_content_b64 = local.minecraft_compose_file_content_b64
   })
+
+  instance_tags = {
+    Name                             = "${local.title} Spot Instance"
+    "minecraft-spot-discord:related" = true
+  }
+  root_volume_tags = {
+    Name = "${local.title} Root Volume"
+  }
 }
 
 resource "aws_key_pair" "ec2_spot_instance" {
@@ -114,9 +122,13 @@ module "ec2_spot_instance" {
   ami           = "ami-07a5db12eede6ff87" // Amazon Linux 2023 AMI 2023.4.20240611.0 arm64 HVM kernel-6.1
   instance_type = var.instance_type
 
-  vpc_security_group_ids      = [aws_security_group.spot_instance.id]
-  subnet_id                   = module.vpc.public_subnets[0]
-  associate_public_ip_address = true
+  vpc_security_group_ids = [aws_security_group.spot_instance.id]
+  subnet_id              = module.vpc.public_subnets[0]
+
+  // We enable auto IPv4 via subnet settings (map_public_ip_on_launch)
+  // instead of here to avoid force-replacement when applying while
+  // the instance is stopped
+  # associate_public_ip_address = true
 
   # monitoring = true
   key_name = aws_key_pair.ec2_spot_instance.key_name
@@ -128,14 +140,27 @@ module "ec2_spot_instance" {
   enable_volume_tags = false
 
   // Due to bug in the provider, spot instances and its root volumes are not being tagged automatically
-  # instance_tags = { Name = "${local.title} Spot Instance" }
   # enable_volume_tags = false
-  root_block_device = [{
-    tags = {
-      Name = "${local.title} Root Volume"
-    }
-  }]
+  # root_block_device = [{
+  #   tags = {
+  #     Name = "${local.title} Root Volume"
+  #   }
+  # }]
   tags = {
     Name = "${local.title} Spot Instance Request"
   }
+}
+
+resource "aws_ec2_tag" "instance_tags_workaround" {
+  for_each    = local.instance_tags
+  resource_id = module.ec2_spot_instance.spot_instance_id
+  key         = each.key
+  value       = each.value
+}
+
+resource "aws_ec2_tag" "root_volume_tags_workaround" {
+  for_each    = local.root_volume_tags
+  resource_id = module.ec2_spot_instance.root_block_device[0].volume_id
+  key         = each.key
+  value       = each.value
 }

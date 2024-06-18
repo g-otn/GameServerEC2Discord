@@ -9,6 +9,8 @@ module "vpc" {
   public_subnets      = ["10.0.101.0/24"]
   public_subnet_names = ["${local.title} Public Subnet 1 (${var.subnet_az})"]
 
+  map_public_ip_on_launch = true
+
   enable_flow_log                                 = true
   flow_log_cloudwatch_log_group_retention_in_days = 30
   flow_log_cloudwatch_log_group_name_prefix       = "/aws/vpc-flow-log/${local.title_PascalCase}-"

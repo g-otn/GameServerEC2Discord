@@ -36,6 +36,7 @@ module "lambda_manage_instance" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   architectures = ["arm64"]
+  timeout       = 5
 
   publish = true
 

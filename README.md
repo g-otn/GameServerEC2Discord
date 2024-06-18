@@ -49,7 +49,7 @@ This is achieved by:
 
 The process works as follow:
 
-1. The player types `/start` on a Discord server
+1. The player types `/start` in a Discord server text channel
 2. [Discord calls](https://discord.com/developers/docs/interactions/overview#preparing-for-interactions) our Lambda function via its Function URL
 3. The Lambda function sends the interaction token alongside the `start` command to another Lambda via SNS and then [ACKs the interaction](https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type) to avoid Discord's 3s interaction response time limit.
 4. The other Lambda which can take its time, and starts the EC2 instance. Other commands such as `stop`, `restart` and `status` can stop, reboot and describe the instance.
@@ -75,7 +75,7 @@ The process works as follow:
 - Region assumed is `us-east-2` (Ohio)
 - Prices are in USD
 - Assumes usage of [Always Free](https://aws.amazon.com/free/?nc2=h_ql_pr_ft&all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers (different from 12 month Free Tier)
-  - This is important mostly due to the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. Otherwise due to the current price rates and regular gameplay network usage, it would cost more than the instance itself
+  - This is important mostly due to the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. (See also [blog post](https://aws.amazon.com/pt/blogs/aws/aws-free-tier-data-transfer-expansion-100-gb-from-regions-and-1-tb-from-amazon-cloudfront-per-month/)) Otherwise due to the current price rates and regular gameplay network usage, it would cost more than the instance itself
 - For the EC2 prices (in the table below), keep in mind about:
   - Surplus vCPU usage credits charges when using burstable instances in unlimited mode (default). See [Earn CPU credits](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html#earning-CPU-credits) and [When to use unlimited mode versus fixed CPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#when-to-use-unlimited-mode).
     - Basically, don't play at heavy CPU usage continuously for TOO long when using those instances types.
@@ -106,7 +106,7 @@ If you have access to the 12-month Free tier, you should automatically benefit f
 Some of the services used are more than covered by the ["always free"](https://aws.amazon.com/free/?all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers,
 namely:
 
-Lambda; SNS; KMS; CloudWatch / X-Ray; Network data transfer from EC2 to internet.
+Lambda; SNS; KMS; CloudWatch / X-Ray; Network Data Transfer from EC2 to internet.
 
 ## Prerequisites
 
@@ -193,6 +193,8 @@ Finally, save around 600MiB-1.5GiB for the JVM / Off-heap memory.
 
 6. Run `terraform apply` after a while the instance and the game server should be running and accessible
 
+Note: In subsequent applies, it will always [force replacement of the instance if the instance is not running](https://stackoverflow.com/q/52519463/11138267). This doesn't matter much because the game data is not stored in the root volume which will be replaced, but it'll affect vCPU credits and CloudWatch metrics since it'll be a new instance, and means any manual changes and files written to the OS outside the game data volume will be lost. A workaround is to just leave the instance running while applying.
+
 ### Discord interactions
 
 7. Go to the Lambda console on the region you chose, find the `interaction-handler` Lambda and copy it's Function URL.
@@ -226,6 +228,12 @@ node --env-file=.env add-slash-commands.js
 
 13. You should now be able to use the `/start`, `/stop`, `/restart`, `/ip` or `/status` commands into one of the text channels to manage the instance.
     - You may need do additional permission/role setup depending on your Discord server configuration (i.e if the app can't use the text channel)
+
+### Automatic backups
+
+Daily snapshots of the data volume are taken via Data Lifecycle Manager. However depending on your region, you **must** enable regional STS endpoint. `us-east-2` (Ohio) for example, requires it. Otherwise the DLM policy will error when it tries to create the snapshot.
+
+14. If applicable, enable the STS regional endpoint for your region on the [IAM Console](https://us-east-1.console.aws.amazon.com/iam/home?#/account_settings). See [Activating and deactivating AWS STS in an AWS Region](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
 
 ## Testing and troubleshooting
 

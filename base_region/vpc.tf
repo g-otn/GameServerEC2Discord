@@ -2,7 +2,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.8"
 
-  name = "${local.title} VPC"
+  name = "${var.base.prefix} VPC"
   cidr = "10.0.0.0/16"
 
   azs                 = [var.subnet_az]

@@ -254,6 +254,11 @@ Inside the instance:
 - `docker logs minecraft-mc-1 -f`: Latest logs from the container
 - `sudo systemctl stop minecraft_shutdown.timer`: Stops the systemd timer which prevents the instance from being shut down automatically until next reboot. Don't forget to shutdown manually or start the timer again!
 
+#### SSH
+
+Your SSH client may give you a warning when connecting due to the IP changing between server restarts.
+You can delete the `~/.ssh/known_hosts` file as a quick workaround.
+
 ## To-do
 
 I may or may not do these in the future:

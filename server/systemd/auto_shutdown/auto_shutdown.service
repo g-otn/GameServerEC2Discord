@@ -5,7 +5,7 @@ Description=Shutdowns instance if docker compose stack is not running
 Type=oneshot
 User=ec2-user
 Group=ec2-user
-ExecStart=/home/ec2-user/minecraft_shutdown.sh
+ExecStart=/home/ec2-user/auto_shutdown.sh
 
 [Install]
 WantedBy=multi-user.target

@@ -28,8 +28,7 @@ provider "aws" {
   default_tags {
     tags = {
       Terraform = "true"
-      "minecraft-spot-discord:related" : "true"
-      "minecraft-spot-discord:server-name" : var.name
+      "${local.prefix}:Related" : "true"
     }
   }
 }

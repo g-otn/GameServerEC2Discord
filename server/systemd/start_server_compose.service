@@ -1,0 +1,15 @@
+[Unit]
+Description=Runs server docker compose once after docker service init
+After=docker.service
+BindsTo=docker.service
+ReloadPropagatedFrom=docker.service
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+ExecStart=docker compose -f ${server_data_path}/docker-compose.yml up -d
+ExecReload=docker compose -f ${server_data_path}/docker-compose.yml up -d
+
+[Install]
+WantedBy=multi-user.target

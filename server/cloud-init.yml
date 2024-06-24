@@ -13,29 +13,22 @@ bootcmd:
 
 timezone: ${timezone}
 
-device_aliases: { "minecraft_data": "${device_name}" }
+device_aliases: { "data": "${device_name}" }
 disk_setup:
-  minecraft_data:
+  data:
     table_type: gpt
     layout: true
     overwrite: true
 
 fs_setup:
-  - device: minecraft_data
-    label: Minecraft
+  - device: data
+    label: Server_Data
     filesystem: xfs
     partition: any
     overwrite: true
 
 mounts:
-  - [
-      "minecraft_data",
-      "${minecraft_data_path}",
-      "xfs",
-      "defaults,nofail",
-      "0",
-      "2",
-    ]
+  - ["data", "${data_path}", "xfs", "defaults,nofail", "0", "2"]
 
 write_files:
   # Duck DNS files

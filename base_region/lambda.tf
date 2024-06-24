@@ -2,7 +2,7 @@ module "lambda_handle_interaction" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "~> 7.4"
 
-  function_name = "${local.title_PascalCase}-handle-interaction"
+  function_name = "${local.prefix}-handle-interaction"
   description   = "Handles Discord slash commands interactions to manage the server's instance"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
@@ -31,7 +31,7 @@ module "lambda_manage_instance" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "~> 7.4"
 
-  function_name = "${local.title_PascalCase}-manage-instance"
+  function_name = "${local.prefix}-manage-instance"
   description   = "Execute commands to manage EC2 instance and updates Discord interaction follow-up message"
   handler       = "index.handler"
   runtime       = "nodejs20.x"

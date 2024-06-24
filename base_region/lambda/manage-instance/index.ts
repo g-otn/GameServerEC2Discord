@@ -19,14 +19,12 @@ import { RESTPatchAPIInteractionOriginalResponseJSONBody } from 'discord-api-typ
 const DISCORD_APP_ID = process.env.DISCORD_APP_ID;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const DUCKDNS_DOMAIN = process.env.DUCKDNS_DOMAIN;
-const INSTANCE_ID = process.env.INSTANCE_ID;
 const MINECRAFT_PORT = process.env.MINECRAFT_PORT;
 
 if (
   !DISCORD_APP_ID ||
   !DISCORD_BOT_TOKEN ||
   !DUCKDNS_DOMAIN ||
-  !INSTANCE_ID ||
   !MINECRAFT_PORT
 ) {
   throw new Error('Missing env vars');
@@ -75,7 +73,7 @@ const sendEC2Command = async (instanceId: string, command: string) => {
             (PublicDnsName
               ? `- \`${PublicDnsName}:${MINECRAFT_PORT}\`\n`
               : '') +
-            `- \`${DUCKDNS_DOMAIN}.duckdns.org:${MINECRAFT_PORT}\` (Dynamic)`
+            `- \`${DUCKDNS_DOMAIN}.duckdns.org:${MINECRAFT_PORT}\``
           );
         });
     default:
@@ -116,14 +114,15 @@ export const handler: Handler<SNSEvent> = async (event) => {
       } satisfies RESTPatchAPIInteractionOriginalResponseJSONBody),
     }
   )
-    .then(async (res) =>
-      console.log(
-        res.status,
-        JSON.stringify(await res.json(), null, '\t'),
-        '\n'
-      )
-    )
+    .then(async ({ status, json }) => {
+      const body = await json();
+      console.log(status, JSON.stringify(body, null, '\t'), '\n');
+      if (status !== 200) {
+        throw { status, body };
+      }
+    })
     .catch((err) => {
       console.log('Error sending message:', err);
+      throw err;
     });
 };

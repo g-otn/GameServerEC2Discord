@@ -91,7 +91,7 @@ variable "compose_game_environment" {
 }
 
 variable "compose_game_limits" {
-  description = "The deployment resource limits section of the game's Docker compose service. Use to determine hard limits on memory and cpu to help prevent the instance from hanging"
+  description = "The deployment resource limits section of the game's Docker compose service. Use to determine hard limits on memory and cpu to help prevent the instance from hanging. See https://docs.docker.com/compose/compose-file/deploy/#resources"
   type        = map(any)
 }
 

@@ -6,18 +6,18 @@ locals {
   }))
   duckdns_service_file_content_b64 = base64encode(file("./cloud-init/duckdns/duck.service"))
 
-  minecraft_data_path            = "/srv/minecraft"
+  server_data_path               = "/srv/minecraft"
   minecraft_compose_service_name = "mc"
   device_name                    = "/dev/sdm"
 
   minecraft_shutdown_service_file_content_b64 = base64encode(file(("./cloud-init/minecraft/minecraft_shutdown.service")))
   minecraft_shutdown_timer_file_content_b64   = base64encode(file("./cloud-init/minecraft/minecraft_shutdown.timer"))
   minecraft_shutdown_script_file_content_b64 = base64encode(templatefile("./cloud-init/minecraft/minecraft_shutdown.sh", {
-    minecraft_data_path            = local.minecraft_data_path
+    server_data_path               = local.server_data_path
     minecraft_compose_service_name = local.minecraft_compose_service_name
   }))
   minecraft_service_file_content_b64 = base64encode(templatefile(("./cloud-init/minecraft/minecraft.service"), {
-    minecraft_data_path = local.minecraft_data_path
+    server_data_path = local.server_data_path
   }))
 
   minecraft_compose_file_content_b64 = base64encode(yamlencode({
@@ -44,7 +44,7 @@ locals {
           "MAX_PLAYERS" : 15
         }, var.minecraft_compose_environment)
         "volumes" : [
-          "${local.minecraft_data_path}:/data"
+          "${local.server_data_path}:/data"
         ]
         "deploy" : {
           "resources" : {
@@ -59,8 +59,8 @@ locals {
   ec2_user_data = templatefile("./cloud-init/cloud-init.yml", {
     timezone = var.instance_timezone
 
-    minecraft_data_path = local.minecraft_data_path
-    device_name         = local.device_name
+    server_data_path = local.server_data_path
+    device_name      = local.device_name
 
     duckdns_script_file_content_b64  = local.duckdns_script_file_content_b64
     duckdns_service_file_content_b64 = local.duckdns_service_file_content_b64

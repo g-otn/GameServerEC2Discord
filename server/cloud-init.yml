@@ -2,6 +2,7 @@
 packages:
   - htop
   - docker
+  - conntrack
 
 bootcmd:
   # cloud-init runs before EBS volume mount (sometimes?), so we have to wait. See https://stackoverflow.com/a/77868589/11138267
@@ -28,7 +29,7 @@ fs_setup:
     overwrite: true
 
 mounts:
-  - ["data", "${data_path}", "xfs", "defaults,nofail", "0", "2"]
+  - ["data", "${server_data_path}", "xfs", "defaults,nofail", "0", "2"]
 
 write_files:
   # Duck DNS files
@@ -48,7 +49,7 @@ write_files:
     defer: true
     encoding: base64
     content: ${minecraft_service_file_content_b64}
-  - path: ${minecraft_data_path}/docker-compose.yml
+  - path: ${server_data_path}/docker-compose.yml
     owner: ec2-user
     defer: true
     encoding: base64
@@ -92,7 +93,7 @@ runcmd:
   - systemctl enable docker
   - systemctl start docker
   # Initialize Minecraft server
-  - chown ec2-user:ec2-user -R ${minecraft_data_path} # Fix permissions
+  - chown ec2-user:ec2-user -R ${server_data_path} # Fix permissions
   - systemctl enable minecraft
   - systemctl start minecraft
   - systemctl enable minecraft_shutdown.timer

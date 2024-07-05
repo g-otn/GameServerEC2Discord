@@ -4,24 +4,29 @@ locals {
 
   game_defaults = {
     minecraft = {
-      data_path = "/srv/minecraft"
+      server_data_path = "/srv/minecraft"
+      network          = "ipv4"
+      instance_type    = "t4g.large"
+      compose          = local.compose_defaults.minecraft
     }
     unknown = {
-      game_id   = replace(var.unknown_game_name, "/\\W|_|\\s/", "_")
-      data_path = "/srv/${local.game_defaults.unknown.game_id}"
+      game_id          = replace(var.unknown_game_name, "/\\W|_|\\s/", "_")
+      server_data_path = "/srv/${local.game_defaults.unknown.game_id}"
     }
   }
   game = local.game_defaults[var.game]
 
   compose_defaults = {
-    minecraft = {
+    minecraft = merge({
+      // https://docker-minecraft-server.readthedocs.io/en/latest/#using-docker-compose
       services : {
         mc : {
           image : "itzg/minecraft-server",
           tty : true,
           stdin_open : true,
-          ports : try(var.compose_game_ports),
+          ports : try(var.compose_game_ports, ["25565:25565"]),
           environment : merge({
+            // https://docker-minecraft-server.readthedocs.io/en/latest/variables
             EULA : true,
             SNOOPER_ENABLED : false,
 
@@ -38,7 +43,7 @@ locals {
             MAX_PLAYERS : 15
           }, var.compose_game_environment)
           volumes : [
-            "${local.game_defaults.minecraft.data_path}:/data"
+            "${local.game_defaults.minecraft.server_data_path}:/data"
           ]
           deploy : {
             resources : {
@@ -48,9 +53,9 @@ locals {
           restart : "no"
         }
       }
-    }
-    unknown = {
-      services : var.compose_game_services
-    }
+    }, var.compose_top_level_elements)
+    unknown = merge({
+      services : var.compose_services
+    }, var.compose_top_level_elements)
   }
 }

@@ -1,17 +1,24 @@
 locals {
-  prefix    = "SpotDiscord"
-  prefix_sm = "SD"
+  prefix         = "SpotDiscord"
+  prefix_sm      = "SD"
+  prefix_id_game = "${local.prefix} ${var.game} ${var.game}"
+
+  server_data_path = "/srv/${var.game == "custom" ? var.custom_game_name : var.game}"
 
   game_defaults = {
     minecraft = {
-      server_data_path = "/srv/minecraft"
-      network          = "ipv4"
-      instance_type    = "t4g.large"
-      compose          = local.compose_defaults.minecraft
+      game_name                 = "Minecraft"
+      instance_type             = "t4g.large"
+      data_volume_size          = coalesce(var.data_volume_size, 10)
+      compose                   = local.compose_defaults.minecraft
+      compose_main_service_name = "mc"
     }
-    unknown = {
-      game_id          = replace(var.unknown_game_name, "/\\W|_|\\s/", "_")
-      server_data_path = "/srv/${local.game_defaults.unknown.game_id}"
+    custom = {
+      game_name                 = var.custom_game_name
+      instance_type             = var.instance_type
+      data_volume_size          = var.data_volume_size
+      compose                   = local.compose_defaults.custom
+      compose_main_service_name = "main"
     }
   }
   game = local.game_defaults[var.game]
@@ -20,7 +27,7 @@ locals {
     minecraft = merge({
       // https://docker-minecraft-server.readthedocs.io/en/latest/#using-docker-compose
       services : {
-        mc : {
+        "${local.game_defaults.minecraft.compose_main_service_name}" : {
           image : "itzg/minecraft-server",
           tty : true,
           stdin_open : true,
@@ -41,6 +48,9 @@ locals {
 
             VIEW_DISTANCE : 12
             MAX_PLAYERS : 15
+
+            INIT_MEMORY : "6100M"
+            MAX_MEMORY : "6100M"
           }, var.compose_game_environment)
           volumes : [
             "${local.game_defaults.minecraft.server_data_path}:/data"
@@ -54,7 +64,7 @@ locals {
         }
       }
     }, var.compose_top_level_elements)
-    unknown = merge({
+    custom = merge({
       services : var.compose_services
     }, var.compose_top_level_elements)
   }

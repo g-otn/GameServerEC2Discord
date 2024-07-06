@@ -3,8 +3,12 @@
 # ----------------------------------------------------------------
 
 variable "id" {
-  description = "A unique identifier across all servers and all regions for this server."
+  description = "An alphanumeric identifier for this server, unique across all servers and all regions. Will also be used in discord interactions"
   type        = string
+  validation {
+    condition     = can(regex("^[[:alnum:]]+$", var.id))
+    error_message = "ID must be alphanumeric"
+  }
 }
 
 variable "game" {
@@ -12,22 +16,25 @@ variable "game" {
   type        = string
 
   validation {
-    condition     = contains(["minecraft", "unknown"], var.game)
-    error_message = "Valid values are: minecraft, unknown"
+    condition     = contains(["minecraft", "custom"], var.game)
+    error_message = "Valid values are: minecraft, custom"
   }
 }
 
-variable "unknown_game_name" {
-  description = "If using unknown as the game, you can use this variable to help name the resources created. Alphanumeric characters only. No spaces, etc"
+variable "custom_game_name" {
+  description = "If using 'custom' as the game, you can use this variable to help name the resources created. Alphanumeric values only"
   type        = string
-  default     = "Unknown"
+  default     = "Custom"
+  validation {
+    condition     = can(regex("^[[:alnum:]]+$", var.custom_game_name)) && length(var.custom_game_name) <= 20
+    error_message = "ID must be alphanumeric and less or equal to 20 characters"
+  }
 }
 
 variable "ddns_service" {
   description = "DDNS service to use. If 'none' is chosen, DDNS service will be disabled and the instance will only be acessible via dynamic IP/DNS"
   type        = string
   default     = "duckdns"
-
   validation {
     condition     = contains(["duckdns", "none"], var.ddns_service)
     error_message = "Valid values are: duckdns"
@@ -54,15 +61,23 @@ variable "az" {
 }
 
 variable "instance_type" {
-  description = "Instance type for the EC2 Spot Instance. See https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily"
+  description = "Instance type for the EC2 Spot Instance. Make sure to update related variables (e.g docker memory limits) if you change this. See https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily"
   type        = string
-  default     = ""
+  default     = null
+  validation {
+    condition     = var.game != "custom" || var.instance_type != null
+    error_message = "Instance type must be set for custom games"
+  }
 }
 
 variable "data_volume_size" {
-  description = "The size, in GB of the EBS volume storing the game server data"
+  description = "The size, in GB of the EBS volume storing the game server data. Make sure it's enough!"
   type        = number
-  default     = 10
+  default     = null
+  validation {
+    condition     = var.game != "custom" || var.data_volume_size != null
+    error_message = "Data volume size must be set for custom games"
+  }
 }
 
 variable "sg_ingress_rules" {
@@ -80,19 +95,23 @@ variable "sg_ingress_rules" {
 # ----------------------------------------------------------------
 # Docker compose variables
 # ----------------------------------------------------------------
+
 variable "compose_game_ports" {
   description = "The ports to expose and map to the game's Docker Compose service. Use if you want to expose extra ports from the container to outside the instance"
   type        = list(string)
+  default     = null
 }
 
 variable "compose_game_environment" {
   description = "The environment variables section of the game's Docker compose service. Required if you need another port to be accessible from the internet"
   type        = map(string)
+  default     = {}
 }
 
 variable "compose_game_limits" {
   description = "The deployment resource limits section of the game's Docker compose service. Use to determine hard limits on memory and cpu to help prevent the instance from hanging. See https://docs.docker.com/compose/compose-file/deploy/#resources"
   type        = map(any)
+  default     = {}
 }
 
 variable "compose_services" {

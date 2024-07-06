@@ -24,8 +24,7 @@ variable "minecraft_compose_environment" {
   description = "See https://docker-minecraft-server.readthedocs.io/en/latest/variables"
   type        = map(string)
   default = {
-    "INIT_MEMORY" : "6100M"
-    "MAX_MEMORY" : "6100M"
+
   }
 }
 

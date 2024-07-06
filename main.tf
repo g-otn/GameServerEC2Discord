@@ -7,6 +7,4 @@ module "base_us_east_2" {
 
   region = "us-east-2"
   azs    = ["us-east-2a"]
-
-  ssh_public_key = var.ssh_public_key
 }

@@ -187,6 +187,8 @@ Finally, save around 600MiB-1.5GiB for the JVM / Off-heap memory.
 - [AFK-Kicker](https://modrinth.com/plugin/afk-kicker) - Or any other plugin which can kick afk players, so the server doesn't stays on if nobody is playing
 - [TabTPS](https://modrinth.com/plugin/tabtps) - Or any other plugin for easy in-game information display of server load, etc
 
+tip: comment plugins in docker compose after first download to avoid request error
+
 ### Applying
 
 5. Run `terraform plan` and revise the resources to be created

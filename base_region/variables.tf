@@ -1,4 +1,4 @@
-variable "base" {
+variable "base_global" {
   type = object({
     prefix    = string
     prefix_sm = string

@@ -1,19 +1,20 @@
 locals {
-  duckdns_script_file_content_b64 = base64encode(templatefile("./cloud-init/duckdns/duck.sh", {
+  duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? templatefile("./ddns/duckdns/duck.sh", {
     duckdns_domain = var.duckdns_domain
     duckdns_token  = var.duckdns_token
-  }))
-  duckdns_service_file_content_b64 = base64encode(file("./cloud-init/duckdns/duck.service"))
+  }) : null
+  duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./ddns/duckdns/duck.service")) : null
 
   device_name = "/dev/sdm"
 
-  minecraft_shutdown_service_file_content_b64 = base64encode(file(("./cloud-init/minecraft/minecraft_shutdown.service")))
-  minecraft_shutdown_timer_file_content_b64   = base64encode(file("./cloud-init/minecraft/minecraft_shutdown.timer"))
-  minecraft_shutdown_script_file_content_b64 = base64encode(templatefile("./cloud-init/minecraft/minecraft_shutdown.sh", {
-    server_data_path               = local.server_data_path
-    minecraft_compose_service_name = local.minecraft_compose_service_name
+  auto_shutdown_service_file_content_b64 = base64encode(file("./systemd/auto_shutdown/auto_shutdown.service"))
+  auto_shutdown_timer_file_content_b64   = base64encode(file("./systemd/auto_shutdown/auto_shutdown.timer"))
+  auto_shutdown_script_file_content_b64 = base64encode(templatefile("./systemd/auto_shutdown/auto_shutdown.sh", {
+    server_data_path          = local.server_data_path
+    compose_main_service_name = local.game.compose_main_service_name
   }))
-  minecraft_service_file_content_b64 = base64encode(templatefile(("./cloud-init/minecraft/minecraft.service"), {
+
+  compose_start_file_content_b64 = base64encode(templatefile(("./systemd/compose_start.service"), {
     server_data_path = local.server_data_path
   }))
 
@@ -23,15 +24,15 @@ locals {
     server_data_path = local.server_data_path
     device_name      = local.device_name
 
+    compose_file_content_b64       = local.compose_file_content_b64
+    compose_start_file_content_b64 = local.compose_start_file_content_b64
+
+    auto_shutdown_script_file_content_b64  = local.auto_shutdown_script_file_content_b64
+    auto_shutdown_service_file_content_b64 = local.auto_shutdown_service_file_content_b64
+    auto_shutdown_timer_file_content_b64   = local.auto_shutdown_timer_file_content_b64
+
     duckdns_script_file_content_b64  = local.duckdns_script_file_content_b64
     duckdns_service_file_content_b64 = local.duckdns_service_file_content_b64
-
-    minecraft_shutdown_script_file_content_b64  = local.minecraft_shutdown_script_file_content_b64
-    minecraft_shutdown_service_file_content_b64 = local.minecraft_shutdown_service_file_content_b64
-    minecraft_shutdown_timer_file_content_b64   = local.minecraft_shutdown_timer_file_content_b64
-
-    compose_start_service_file_content_b64 = local.minecraft_service_file_content_b64
-    compose_file_content_b64               = base64encode(local.game.compose)
   })
 
   instance_tags = {
@@ -43,29 +44,6 @@ locals {
   }
 }
 
-resource "aws_ebs_volume" "server_data" {
-  availability_zone = var.az
-  type              = "gp3"
-  size              = local.game.data_volume_size
-  iops              = 3000
-  throughput        = 125
-
-  final_snapshot = true
-
-  tags = {
-    Name = "${local.prefix_id_game} Data Volume"
-    "${local.prefix}:data-volume" : true
-  }
-}
-
-resource "aws_volume_attachment" "attach_server_data_to_instance" {
-  device_name = local.server_data_path
-  volume_id   = aws_ebs_volume.server_data.id
-  instance_id = module.ec2_spot_instance.spot_instance_id
-
-  stop_instance_before_detaching = true
-}
-
 module "ec2_spot_instance" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "~> 5.6"
@@ -75,8 +53,8 @@ module "ec2_spot_instance" {
   create_spot_instance      = true
   spot_wait_for_fulfillment = true
 
-  ami           = "ami-07a5db12eede6ff87" // Amazon Linux 2023 AMI 2023.4.20240611.0 arm64 HVM kernel-6.1
-  instance_type = var.instance_type
+  ami           = coalesce(var.arch, local.game.arch) == "arm64" ? data.aws_ami.latest_al2023_arm64.id : data.aws_ami.latest_al2023_x86_64.id
+  instance_type = coalesce(var.instance_type, local.game.instance_type)
 
   vpc_security_group_ids = [aws_security_group.spot_instance.id]
   subnet_id              = module.vpc.public_subnets[0]

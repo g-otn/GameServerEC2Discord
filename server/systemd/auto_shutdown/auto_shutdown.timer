@@ -1,6 +1,6 @@
 [Unit]
-Description=Executes auto_shutdown service every minute
-After=start_server_compose.service
+Description=Runs auto_shutdown check every 2 minutes
+After=compose_start.service
 
 [Timer]
 OnBootSec=2min

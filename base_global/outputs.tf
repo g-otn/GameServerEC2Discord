@@ -1,4 +1,4 @@
-output "base" {
+output "base_global" {
   value = {
     prefix                               = local.prefix
     prefix_sm                            = local.prefix_sm

@@ -27,7 +27,7 @@ resource "aws_dlm_lifecycle_policy" "backup_data" {
     }
 
     target_tags = {
-      "${local.prefix}:Related" = true
+      "${local.prefix}:DataVolume" = true
     }
   }
 

@@ -5,29 +5,29 @@ locals {
 
   server_data_path = "/srv/${var.game == "custom" ? var.custom_game_name : var.game}"
 
-  game_defaults = {
+  game_defaults_map = {
     minecraft = {
       game_name                 = "Minecraft"
       instance_type             = "t4g.large"
-      data_volume_size          = coalesce(var.data_volume_size, 10)
-      compose                   = local.compose_defaults.minecraft
+      arch                      = "arm64"
+      data_volume_size          = 10
       compose_main_service_name = "mc"
     }
     custom = {
       game_name                 = var.custom_game_name
       instance_type             = var.instance_type
       data_volume_size          = var.data_volume_size
-      compose                   = local.compose_defaults.custom
       compose_main_service_name = "main"
     }
   }
-  game = local.game_defaults[var.game]
+  game                     = local.game_defaults_map[var.game]
+  compose_file_content_b64 = base64encode(yamlencode(local.compose_map[var.game]))
 
-  compose_defaults = {
+  compose_map = {
     minecraft = merge({
       // https://docker-minecraft-server.readthedocs.io/en/latest/#using-docker-compose
       services : {
-        "${local.game_defaults.minecraft.compose_main_service_name}" : {
+        "${local.game_defaults_map.minecraft.compose_main_service_name}" : {
           image : "itzg/minecraft-server",
           tty : true,
           stdin_open : true,
@@ -53,7 +53,7 @@ locals {
             MAX_MEMORY : "6100M"
           }, var.compose_game_environment)
           volumes : [
-            "${local.game_defaults.minecraft.server_data_path}:/data"
+            "${local.game_defaults_map.minecraft.server_data_path}:/data"
           ]
           deploy : {
             resources : {

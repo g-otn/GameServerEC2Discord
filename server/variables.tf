@@ -42,7 +42,7 @@ variable "ddns_service" {
 }
 
 variable "main_port" {
-  description = "Main TCP port used by players to connect to the server. Also used to check for connections to perform auto shutdown when server is empty"
+  description = "Main TCP port used by players to connect to the server. Also used to check for connections to perform auto shutdown when server is empty.  Automatically set based on game"
   type        = number
 }
 
@@ -61,7 +61,7 @@ variable "az" {
 }
 
 variable "instance_type" {
-  description = "Instance type for the EC2 Spot Instance. Make sure to update related variables (e.g docker memory limits) if you change this. See https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily"
+  description = "Instance type for the EC2 Spot Instance. Make sure to update related variables (e.g docker memory limits) if you change this. See https://instances.vantage.sh/?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily. Automatically set based on game"
   type        = string
   default     = null
   validation {
@@ -70,8 +70,18 @@ variable "instance_type" {
   }
 }
 
+variable "arch" {
+  description = "Desired architecture for the instance. Used to select the correct AMI. Must match instance type architecture. Automatically set based on game"
+  type        = string
+  default     = null
+  validation {
+    condition     = var.arch == "arm64" || var.arch == "x86_64"
+    error_message = "Arch must be 'arm64' or 'x86_64'"
+  }
+}
+
 variable "data_volume_size" {
-  description = "The size, in GB of the EBS volume storing the game server data. Make sure it's enough!"
+  description = "The size, in GB of the EBS volume storing the game server data. Make sure it's enough! Automatically set based on game"
   type        = number
   default     = null
   validation {
@@ -97,7 +107,7 @@ variable "sg_ingress_rules" {
 # ----------------------------------------------------------------
 
 variable "compose_game_ports" {
-  description = "The ports to expose and map to the game's Docker Compose service. Use if you want to expose extra ports from the container to outside the instance"
+  description = "The ports to expose and map to the game's Docker Compose service. Use if you want to expose extra ports from the container to outside the instance. Automatically set based on game"
   type        = list(string)
   default     = null
 }
@@ -131,7 +141,7 @@ variable "compose_top_level_elements" {
 variable "instance_timezone" {
   description = "Custom timezone for the instance OS set via cloud-init. See timedatectl / https://gist.github.com/adamgen/3f2c30361296bbb45ada43d83c1ac4e5"
   type        = string
-  default     = ""
+  default     = null
 }
 
 # ----------------------------------------------------------------
@@ -173,12 +183,12 @@ variable "discord_bot_token" {
 # Base variables
 # ----------------------------------------------------------------
 
-variable "global" {
+variable "base_global" {
   description = "Global/common data required by the server"
   type        = object(any)
 }
 
-variable "region" {
+variable "base_region" {
   description = "Region-specific data required by the server"
   type        = object(any)
 }

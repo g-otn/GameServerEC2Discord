@@ -1,11 +1,12 @@
 locals {
-  prefix         = "SpotDiscord"
-  prefix_sm      = "SD"
-  prefix_id_game = "${local.prefix} ${var.id} ${var.game}"
+  prefix            = "SpotDiscord"
+  prefix_sm         = "SD"
+  prefix_id_game    = "${local.prefix} ${var.id} ${var.game}"
+  prefix_sm_id_game = "${local.prefix_sm} ${var.id} ${var.game}"
 
   duckdns_domain = var.ddns_service == "duckdns" ? regex("^([^.]+)\\.duckdns\\.org$", var.hostname)[0] : null
 
-  server_data_path = "/srv/${var.game == "custom" ? var.custom_game_name : var.game}"
+  server_data_path = "/srv/${var.game == "custom" ? lower(var.custom_game_name) : var.game}"
 
   game_defaults_map = {
     minecraft = {
@@ -57,7 +58,7 @@ locals {
             MAX_MEMORY : "6100M"
           }, var.compose_game_environment)
           volumes : [
-            "${local.game_defaults_map.minecraft.server_data_path}:/data"
+            "${local.server_data_path}:/data"
           ]
           deploy : {
             resources : {

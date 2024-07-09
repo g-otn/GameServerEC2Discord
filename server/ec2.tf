@@ -1,13 +1,13 @@
 locals {
   device_name = "/dev/sdm"
 
-  compose_start_file_content_b64 = base64encode(templatefile(("./systemd/compose_start.service"), {
+  compose_start_file_content_b64 = base64encode(templatefile(("./server/systemd/compose_start.service"), {
     server_data_path = local.server_data_path
   }))
 
-  auto_shutdown_service_file_content_b64 = base64encode(file("./systemd/auto_shutdown/auto_shutdown.service"))
-  auto_shutdown_timer_file_content_b64   = base64encode(file("./systemd/auto_shutdown/auto_shutdown.timer"))
-  auto_shutdown_script_file_content_b64 = base64encode(templatefile("./systemd/auto_shutdown/auto_shutdown.sh", {
+  auto_shutdown_service_file_content_b64 = base64encode(file("./server/systemd/auto_shutdown/auto_shutdown.service"))
+  auto_shutdown_timer_file_content_b64   = base64encode(file("./server/systemd/auto_shutdown/auto_shutdown.timer"))
+  auto_shutdown_script_file_content_b64 = base64encode(templatefile("./server/systemd/auto_shutdown/auto_shutdown.sh", {
     server_data_path          = local.server_data_path
     compose_main_service_name = local.game.compose_main_service_name
   }))
@@ -18,11 +18,13 @@ locals {
   }) : null
   duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./ddns/duckdns/duck.service")) : null
 
-  ec2_user_data = templatefile("./cloud-init.yml", {
+  ec2_user_data = templatefile("./server/cloud-init.yml", {
     timezone = var.instance_timezone
 
     server_data_path = local.server_data_path
     device_name      = local.device_name
+
+    ddns_service = var.ddns_service
 
     compose_file_content_b64       = local.compose_file_content_b64
     compose_start_file_content_b64 = local.compose_start_file_content_b64
@@ -59,8 +61,8 @@ module "ec2_spot_instance" {
   ami           = coalesce(var.arch, local.game.arch) == "arm64" ? data.aws_ami.latest_al2023_arm64.id : data.aws_ami.latest_al2023_x86_64.id
   instance_type = coalesce(var.instance_type, local.game.instance_type)
 
-  vpc_security_group_ids = [aws_security_group.spot_instance.id]
-  subnet_id              = module.vpc.public_subnets[0]
+  vpc_security_group_ids = [var.main_sg_id, aws_security_group.instance_extra_ingress.id]
+  subnet_id              = var.subnet_id
 
   // We enable auto IPv4 via subnet settings (map_public_ip_on_launch)
   // instead of here to avoid force-replacement when applying while
@@ -68,7 +70,7 @@ module "ec2_spot_instance" {
   # associate_public_ip_address = true
 
   # monitoring = true
-  key_name = var.key_pair_instance_ssh
+  key_name = var.key_pair_name
 
   spot_instance_interruption_behavior = "stop"
 

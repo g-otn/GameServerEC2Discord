@@ -1,14 +1,14 @@
 locals {
   base_cidr_block     = "10.0.0.0/16"
   public_subnets      = [for i in range(length(var.azs)) : cidrsubnet(local.base_cidr_block, 8, 101 + i)]
-  public_subnet_names = [for i in range(length(var.azs)) : "${local.local.prefix} Public Subnet ${i + 1}"]
+  public_subnet_names = [for i in range(length(var.azs)) : "${local.prefix} Public Subnet ${i + 1}"]
 }
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.8"
 
-  name = "${var.base.prefix} VPC"
+  name = "${local.prefix} VPC"
   cidr = local.base_cidr_block
 
   azs                 = var.azs
@@ -45,7 +45,7 @@ resource "aws_security_group" "instance_main" {
   vpc_id      = module.vpc.vpc_id
 
   tags = {
-    Name = "${local.prefix} Instance Security Group"
+    Name = "${local.prefix} Instance Main Security Group"
   }
 }
 

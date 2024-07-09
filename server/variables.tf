@@ -75,7 +75,7 @@ variable "arch" {
   type        = string
   default     = null
   validation {
-    condition     = var.arch == "arm64" || var.arch == "x86_64"
+    condition     = var.instance_type != null ? (var.arch == "arm64" || var.arch == "x86_64") : var.arch == null
     error_message = "Arch must be 'arm64' or 'x86_64'"
   }
 }
@@ -207,7 +207,17 @@ variable "discord_bot_token" {
 # ----------------------------------------------------------------
 
 variable "vpc_id" {
-  description = "VPC to associate the server resources with"
+  description = "VPC from base_region to associate the server resources with"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet to place the server instance in. Must be one from base_region VPC"
+  type        = string
+}
+
+variable "main_sg_id" {
+  description = "Security group ID with common security group rules (SSH and ICMP ping)"
   type        = string
 }
 

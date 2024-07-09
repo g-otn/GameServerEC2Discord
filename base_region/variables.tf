@@ -25,12 +25,33 @@ variable "data_volume_snapshot_create_time" {
   default     = "07:39"
 }
 
+
+# ----------------------------------------------------------------
+# Discord variables
+# ----------------------------------------------------------------
+
+variable "discord_app_id" {
+  default = "Discord App ID for Discord API usage"
+  type    = string
+}
+
+variable "discord_app_public_key" {
+  description = "Discord App public key for webhook validation"
+  type        = string
+}
+
+variable "discord_bot_token" {
+  description = "Discord App bot token for Discord API auth"
+  type        = string
+  sensitive   = true
+}
+
 # ----------------------------------------------------------------
 # Base variables
 # ----------------------------------------------------------------
 
 variable "iam_policy_publish_manager_topic_arn" {
-  description = "Global; ARN of the IAM policy that allows publishing to the manager topic"
+  description = "Global; ARN of the IAM policy that allows publishing to the manager SNS topic"
   type        = string
 }
 variable "iam_policy_manage_instance_arn" {

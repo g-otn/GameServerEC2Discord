@@ -1,6 +1,6 @@
 resource "aws_dlm_lifecycle_policy" "backup_data" {
   description        = "Takes daily snapshots of server data EBS volumes and retains them for a week"
-  execution_role_arn = aws_iam_role.dlm_lifecycle_role.arn
+  execution_role_arn = var.iam_role_dlm_lifecycle_arn
   state              = "ENABLED"
 
   policy_details {

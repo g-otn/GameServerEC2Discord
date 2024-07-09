@@ -12,11 +12,11 @@ locals {
     compose_main_service_name = local.game.compose_main_service_name
   }))
 
-  duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? templatefile("./ddns/duckdns/duck.sh", {
+  duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? templatefile("./server/ddns/duckdns/duck.sh", {
     duckdns_domain = local.duckdns_domain
     duckdns_token  = var.duckdns_token
   }) : null
-  duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./ddns/duckdns/duck.service")) : null
+  duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./server/ddns/duckdns/duck.service")) : null
 
   ec2_user_data = templatefile("./server/cloud-init.yml", {
     timezone = var.instance_timezone
@@ -61,7 +61,7 @@ module "ec2_spot_instance" {
   ami           = coalesce(var.arch, local.game.arch) == "arm64" ? data.aws_ami.latest_al2023_arm64.id : data.aws_ami.latest_al2023_x86_64.id
   instance_type = coalesce(var.instance_type, local.game.instance_type)
 
-  vpc_security_group_ids = [var.main_sg_id, aws_security_group.instance_extra_ingress.id]
+  vpc_security_group_ids = [var.main_sg_id, aws_security_group.instance.id]
   subnet_id              = var.subnet_id
 
   // We enable auto IPv4 via subnet settings (map_public_ip_on_launch)

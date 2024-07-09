@@ -9,6 +9,9 @@ module "region_us_east_2" {
   azs    = ["us-east-2a"]
 
   # ----------- Common values between base_region modules -----------
+  # AWS provider
+  aws_access_key = var.aws_access_key
+  aws_secret_key = var.aws_secret_key
   # AWS
   ssh_public_key = var.ssh_public_key
   # Discord

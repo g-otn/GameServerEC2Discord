@@ -1,7 +1,26 @@
+# ----------------------------------------------------------------
+# AWS provider variables
+# ----------------------------------------------------------------
+
+variable "aws_access_key" {
+  description = "AWS Access Key for AWS provider"
+  type        = string
+}
+
+variable "aws_secret_key" {
+  description = "AWS Secret Key for AWS provider"
+  type        = string
+  sensitive   = true
+}
+
 variable "region" {
   description = "AWS region in which to create the resources required by servers"
   type        = string
 }
+
+# ----------------------------------------------------------------
+# AWS variables
+# ----------------------------------------------------------------
 
 variable "azs" {
   description = "AWS availability zones in which to create the resources required by servers."

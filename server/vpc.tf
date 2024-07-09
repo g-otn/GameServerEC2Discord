@@ -9,7 +9,7 @@ resource "aws_security_group" "instance" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "main_port" {
-  security_group_id = aws_security_group.instance_extra_ingress.id
+  security_group_id = aws_security_group.instance.id
   description       = "Allow Game main port"
   from_port         = local.game.main_port
   to_port           = local.game.main_port
@@ -20,7 +20,7 @@ resource "aws_vpc_security_group_ingress_rule" "main_port" {
 resource "aws_vpc_security_group_ingress_rule" "extra_ingress" {
   for_each = tomap(var.sg_ingress_rules)
 
-  security_group_id = aws_security_group.spot_instance.id
+  security_group_id = aws_security_group.instance.id
 
   description = each.value.description
   from_port   = each.value.from_port

@@ -5,7 +5,7 @@
 
 domains=${duckdns_domain}
 token=${duckdns_token}
-interval=${duckdns_interval}
+interval=1m
 
 current=""
 

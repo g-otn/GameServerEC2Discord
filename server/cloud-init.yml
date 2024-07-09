@@ -45,6 +45,7 @@ write_files:
     encoding: base64
     content: ${compose_file_content_b64}
 
+# %{~ if auto_shutdown ~}
   # Auto shutdown files
   - path: /home/ec2-user/minecraft_shutdown.sh
     defer: true
@@ -60,6 +61,7 @@ write_files:
     defer: true
     encoding: base64
     content: ${auto_shutdown_timer_file_content_b64}
+# %{~ endif ~}
 
 # %{~ if ddns_service == "duckdns" ~}
   # Duck DNS files
@@ -108,5 +110,7 @@ runcmd:
   # Start for the first time
   - systemctl enable compose_start
   - systemctl start compose_start
+# %{~ if auto_shutdown ~}
   - systemctl enable auto_shutdown.timer
   - systemctl start auto_shutdown.timer
+# %{~ endif ~}

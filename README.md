@@ -117,7 +117,7 @@ Lambda; SNS; KMS; CloudWatch / X-Ray; Network Data Transfer from EC2 to internet
 
 ## Setup
 
-Requirements: Terraform, Python 3.6+ (due to [terraform-aws-lambda](https://github.com/terraform-aws-modules/terraform-aws-lambda)), Node 18+ (to compile Lambda functions)
+Requirements: Terraform 1.9+, Python 3.6+ (due to [terraform-aws-lambda](https://github.com/terraform-aws-modules/terraform-aws-lambda)), Node.js 18+ (to compile Lambda functions)
 
 ### Initial setup
 

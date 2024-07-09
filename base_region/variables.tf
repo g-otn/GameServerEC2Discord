@@ -1,10 +1,3 @@
-variable "base_global" {
-  type = object({
-    prefix    = string
-    prefix_sm = string
-  })
-}
-
 variable "region" {
   description = "AWS region in which to create the resources required by servers"
   type        = string
@@ -28,15 +21,23 @@ variable "data_volume_snapshot_retain_count" {
 
 variable "data_volume_snapshot_create_time" {
   description = "The time to take the daily snapshot"
-  type        = number
-  default     = "07:12"
+  type        = string
+  default     = "07:39"
 }
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 2.7.0"
-    }
-  }
+# ----------------------------------------------------------------
+# Base variables
+# ----------------------------------------------------------------
+
+variable "iam_policy_publish_manager_topic_arn" {
+  description = "Global; ARN of the IAM policy that allows publishing to the manager topic"
+  type        = string
+}
+variable "iam_policy_manage_instance_arn" {
+  description = "Global; ARN of the IAM policy that allows managing instances"
+  type        = string
+}
+variable "iam_role_dlm_lifecycle_arn" {
+  description = "Global; ARN of the IAM role that allows DLM to manage the lifecycle of the data volume snapshots"
+  type        = string
 }

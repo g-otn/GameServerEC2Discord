@@ -56,7 +56,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ping" {
   to_port           = 0
   ip_protocol       = "icmp"
   // Only you can ping, assumes local Terraform execution environment
-  cidr_ipv4 = var.base_global.myipv4
+  cidr_ipv4 = local.user_ipv4_cidr
 
   tags = {
     Name = "ICMP ping SGR"
@@ -70,7 +70,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   to_port           = 22
   ip_protocol       = "tcp"
   // Only you can SSH, assumes local Terraform execution environment
-  cidr_ipv4 = var.base_global.myipv4
+  cidr_ipv4 = local.user_ipv4_cidr
 
   tags = {
     Name = "SSH SGR"

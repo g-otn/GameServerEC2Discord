@@ -1,7 +1,9 @@
 locals {
   prefix         = "SpotDiscord"
   prefix_sm      = "SD"
-  prefix_id_game = "${local.prefix} ${var.game} ${var.game}"
+  prefix_id_game = "${local.prefix} ${var.id} ${var.game}"
+
+  duckdns_domain = var.ddns_service == "duckdns" ? regex("^([^.]+)\\.duckdns\\.org$", var.hostname)[0] : null
 
   server_data_path = "/srv/${var.game == "custom" ? var.custom_game_name : var.game}"
 
@@ -12,12 +14,14 @@ locals {
       arch                      = "arm64"
       data_volume_size          = 10
       compose_main_service_name = "mc"
+      main_port                 = 25565
     }
     custom = {
       game_name                 = var.custom_game_name
       instance_type             = var.instance_type
       data_volume_size          = var.data_volume_size
       compose_main_service_name = "main"
+      main_port                 = var.main_port
     }
   }
   game                     = local.game_defaults_map[var.game]
@@ -31,7 +35,7 @@ locals {
           image : "itzg/minecraft-server",
           tty : true,
           stdin_open : true,
-          ports : try(var.compose_game_ports, ["25565:25565"]),
+          ports : coalesce(var.compose_game_ports, ["25565:25565"]),
           environment : merge({
             // https://docker-minecraft-server.readthedocs.io/en/latest/variables
             EULA : true,

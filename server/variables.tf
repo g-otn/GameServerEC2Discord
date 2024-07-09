@@ -44,6 +44,11 @@ variable "ddns_service" {
 variable "main_port" {
   description = "Main TCP port used by players to connect to the server. Also used to check for connections to perform auto shutdown when server is empty.  Automatically set based on game"
   type        = number
+  default     = null
+  validation {
+    condition     = var.game != "custom" || var.main_port != null
+    error_message = "Main port must be set for custom games"
+  }
 }
 
 # ----------------------------------------------------------------
@@ -51,13 +56,8 @@ variable "main_port" {
 # ----------------------------------------------------------------
 
 variable "az" {
-  description = "AWS availability zone from the ones defined in base_region in which to place the server instance in"
+  description = "AWS availability zone in which to place the server instance in. Must be one of the azs defined in the chosen base_region"
   type        = string
-
-  validation {
-    condition     = contains(base_region.azs, var.aws_az)
-    error_message = "Availability zone must be one of ${base_region.azs}"
-  }
 }
 
 variable "instance_type" {
@@ -132,6 +132,8 @@ variable "compose_services" {
 
 variable "compose_top_level_elements" {
   description = "Docker Compose file top level elements, for unknown games"
+  type        = map(any)
+  default     = {}
 }
 
 # ----------------------------------------------------------------
@@ -144,12 +146,19 @@ variable "instance_timezone" {
   default     = null
 }
 
+variable "auto_shutdown" {
+  description = "Create files to manage auto shutdown. If disabled the instance won't shut down automatically! Useful to disable for debugging purposes"
+  type        = bool
+  default     = true
+}
+
+
 # ----------------------------------------------------------------
 # DDNS variables
 # ----------------------------------------------------------------
 
-variable "duckdns_domain" {
-  description = "The name of the subdomain (not the full hostname/URL) registered in Duck DNS"
+variable "hostname" {
+  description = "The full hostname created in your DDNS service (e.g myserver.duckdns.org, myserver.ddns.net)"
   type        = string
 }
 
@@ -157,6 +166,20 @@ variable "duckdns_token" {
   description = "Duck DNS token"
   type        = string
   sensitive   = true
+  default     = null
+}
+
+variable "noip_ddns_key_username" {
+  description = "No-IP Hostname DDNS key username (for use with DUC + all.ddnskey.com)"
+  type        = string
+  default     = null
+}
+
+variable "noip_ddns_key_password" {
+  description = "No-IP Hostname DDNS key password (for use with DUC + all.ddnskey.com)"
+  type        = string
+  sensitive   = true
+  default     = null
 }
 
 # ----------------------------------------------------------------
@@ -183,12 +206,12 @@ variable "discord_bot_token" {
 # Base variables
 # ----------------------------------------------------------------
 
-variable "base_global" {
-  description = "Global/common data required by the server"
-  type        = object(any)
+variable "vpc_id" {
+  description = "VPC to associate the server resources with"
+  type        = string
 }
 
-variable "base_region" {
-  description = "Region-specific data required by the server"
-  type        = object(any)
+variable "key_pair_name" {
+  description = "Key pair for the server instance"
+  type        = string
 }

@@ -1,11 +1,9 @@
 locals {
-  duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? templatefile("./ddns/duckdns/duck.sh", {
-    duckdns_domain = var.duckdns_domain
-    duckdns_token  = var.duckdns_token
-  }) : null
-  duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./ddns/duckdns/duck.service")) : null
-
   device_name = "/dev/sdm"
+
+  compose_start_file_content_b64 = base64encode(templatefile(("./systemd/compose_start.service"), {
+    server_data_path = local.server_data_path
+  }))
 
   auto_shutdown_service_file_content_b64 = base64encode(file("./systemd/auto_shutdown/auto_shutdown.service"))
   auto_shutdown_timer_file_content_b64   = base64encode(file("./systemd/auto_shutdown/auto_shutdown.timer"))
@@ -14,11 +12,13 @@ locals {
     compose_main_service_name = local.game.compose_main_service_name
   }))
 
-  compose_start_file_content_b64 = base64encode(templatefile(("./systemd/compose_start.service"), {
-    server_data_path = local.server_data_path
-  }))
+  duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? templatefile("./ddns/duckdns/duck.sh", {
+    duckdns_domain = local.duckdns_domain
+    duckdns_token  = var.duckdns_token
+  }) : null
+  duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./ddns/duckdns/duck.service")) : null
 
-  ec2_user_data = templatefile("./cloud-init/cloud-init.yml", {
+  ec2_user_data = templatefile("./cloud-init.yml", {
     timezone = var.instance_timezone
 
     server_data_path = local.server_data_path
@@ -27,6 +27,7 @@ locals {
     compose_file_content_b64       = local.compose_file_content_b64
     compose_start_file_content_b64 = local.compose_start_file_content_b64
 
+    auto_shutdown                          = var.auto_shutdown
     auto_shutdown_script_file_content_b64  = local.auto_shutdown_script_file_content_b64
     auto_shutdown_service_file_content_b64 = local.auto_shutdown_service_file_content_b64
     auto_shutdown_timer_file_content_b64   = local.auto_shutdown_timer_file_content_b64
@@ -36,8 +37,10 @@ locals {
   })
 
   instance_tags = {
-    Name                              = "${local.prefix_id_game} Spot Instance"
-    "${local.prefix_id_game}:Related" = true
+    Name                       = "${local.prefix_id_game} Spot Instance"
+    "${local.prefix}:Related"  = true
+    "${local.prefix}:Game"     = var.game
+    "${local.prefix}:ServerId" = var.id
   }
   root_volume_tags = {
     Name = "${local.prefix} Root Volume"
@@ -65,7 +68,7 @@ module "ec2_spot_instance" {
   # associate_public_ip_address = true
 
   # monitoring = true
-  key_name = var.base_region.key_pair_instance_ssh
+  key_name = var.key_pair_instance_ssh
 
   spot_instance_interruption_behavior = "stop"
 

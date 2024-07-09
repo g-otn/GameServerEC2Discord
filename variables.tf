@@ -14,24 +14,42 @@ variable "aws_secret_key" {
   sensitive   = true
 }
 
-variable "minecraft_compose_ports" {
-  description = "See "
-  type        = set(string)
-  default     = ["25565:25565"]
+# ----------------------------------------------------------------
+# AWS variables
+# ----------------------------------------------------------------
+
+variable "ssh_public_key" {
+  description = "Public key data in 'Authorized Keys' format for SSH-ing with the instances"
+  type        = string
 }
 
-variable "minecraft_compose_environment" {
-  description = "See https://docker-minecraft-server.readthedocs.io/en/latest/variables"
-  type        = map(string)
-  default = {
+# ----------------------------------------------------------------
+# DDNS variables
+# ----------------------------------------------------------------
 
-  }
+variable "duckdns_token" {
+  description = "Duck DNS token"
+  type        = string
+  sensitive   = true
+  default     = null
 }
 
-variable "minecraft_compose_limits" {
-  description = "See "
-  type        = map(string)
-  default = {
-    memory : "7400mb"
-  }
+# ----------------------------------------------------------------
+# Discord variables
+# ----------------------------------------------------------------
+
+variable "discord_app_id" {
+  default = "Discord App ID for Discord API usage"
+  type    = string
+}
+
+variable "discord_app_public_key" {
+  description = "Discord App public key for webhook validation"
+  type        = string
+}
+
+variable "discord_bot_token" {
+  description = "Discord App bot token for Discord API auth"
+  type        = string
+  sensitive   = true
 }

@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.57"
+    }
+  }
+}
+
 provider "aws" {
   region = var.region
 
@@ -8,7 +17,7 @@ provider "aws" {
     tags = {
       Terraform = "true"
       "${local.prefix}:Related" : "true"
-      "${local.prefix}:BaseRegionModule" : "true"
+      "${local.prefix}:Module" : local.module_name
     }
   }
 }

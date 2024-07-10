@@ -78,7 +78,8 @@ module "ec2_spot_instance" {
 
   enable_volume_tags = false
 
-  // Due to bug in the provider, spot instances and its root volumes are not being tagged automatically
+  // Due to bug in the provider, spot instances and its root volumes are not being tagged automatically.
+  // So we must tag them use aws_ec2_tag
   # enable_volume_tags = false
   # root_block_device = [{
   #   tags = {
@@ -89,7 +90,6 @@ module "ec2_spot_instance" {
     Name = "${local.prefix_id_game} Spot Instance Request"
   }
 }
-
 resource "aws_ec2_tag" "instance_tags_workaround" {
   for_each    = local.instance_tags
   resource_id = module.ec2_spot_instance.spot_instance_id

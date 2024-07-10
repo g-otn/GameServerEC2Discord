@@ -17,3 +17,7 @@ output "key_pair_name" {
 output "available_azs" {
   value = module.vpc.azs
 }
+
+output "region" {
+  value = var.region
+}

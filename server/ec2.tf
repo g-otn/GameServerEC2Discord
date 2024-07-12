@@ -43,6 +43,7 @@ locals {
     "${local.prefix}:Related"  = true
     "${local.prefix}:Game"     = var.game
     "${local.prefix}:ServerId" = var.id
+    "${local.prefix}:Hostname" = var.hostname
   }
   root_volume_tags = {
     Name = "${local.prefix_id_game} Root Volume"

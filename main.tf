@@ -16,6 +16,7 @@ module "global" {
 module "region_us_east_2" {
   source = "./base_region"
 
+  # Change these to desired values
   region = "us-east-2"
   azs    = ["us-east-2a"]
 
@@ -40,14 +41,14 @@ module "region_us_east_2" {
 # Servers - add new servers here, referencing desired region
 # ================================================================
 
-module "myvanilla1" {
+module "example" {
   source = "./server"
 
-  id   = "MyVanilla1"
-  game = "minecraft"
-  az   = module.region_us_east_2.available_azs[0]
-
-  hostname = "myvanilla1.duckdns.org"
+  # Change these to desired values
+  id       = "ExampleVanilla"
+  game     = "minecraft"
+  az       = module.region_us_east_2.available_azs[0]
+  hostname = "example.duckdns.org"
 
   # ---- Common values between server modules ----
   # AWS provider
@@ -59,7 +60,7 @@ module "myvanilla1" {
   discord_app_id         = var.discord_app_id
   discord_app_public_key = var.discord_app_public_key
   discord_bot_token      = var.discord_bot_token
-  # Region (update these to the desired region)
+  # Region (change these to the desired region)
   region        = module.region_us_east_2.region
   vpc_id        = module.region_us_east_2.vpc_id
   subnet_id     = module.region_us_east_2.public_subnets[0]

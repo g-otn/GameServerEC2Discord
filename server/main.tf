@@ -13,7 +13,7 @@ locals {
   game_defaults_map = {
     minecraft = {
       game_name                 = "Minecraft"
-      instance_type             = "t4g.large"
+      instance_type             = "r8g.medium"
       arch                      = "arm64"
       data_volume_size          = 10
       compose_main_service_name = "mc"

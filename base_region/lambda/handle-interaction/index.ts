@@ -60,6 +60,10 @@ const handleInteraction = async ({
 
   console.log('Publishing command', command, 'from interaction', data.id);
 
+  // Publishing to SNS before returning a response creates a race condition where in
+  // rare cases the SNS message may be published, consumed and the instance managed
+  // before the interaction is ready for follow-up.
+  // However the alternative is response streaming (paid), step functions, etc. (overkill)
   const output = await sns.send(
     new PublishCommand({
       TopicArn: MANAGER_INSTRUCTION_SNS_TOPIC_ARN,

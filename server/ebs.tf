@@ -15,7 +15,7 @@ resource "aws_ebs_volume" "server_data" {
 }
 
 resource "aws_volume_attachment" "attach_server_data_to_instance" {
-  device_name = local.server_data_path
+  device_name = local.device_name
   volume_id   = aws_ebs_volume.server_data.id
   instance_id = module.ec2_spot_instance.spot_instance_id
 

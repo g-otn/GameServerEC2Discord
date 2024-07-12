@@ -11,7 +11,7 @@ module "lambda_handle_interaction" {
   publish                    = true
   create_lambda_function_url = true
 
-  source_path = "lambda/handle-interaction/build/index.js"
+  source_path = "base_region/lambda/handle-interaction/build/index.js"
 
   cloudwatch_logs_retention_in_days = 30
   tracing_mode                      = "Active"
@@ -40,7 +40,7 @@ module "lambda_manage_instance" {
 
   publish = true
 
-  source_path = "lambda/manage-instance/build/index.js"
+  source_path = "base_region/lambda/manage-instance/build/index.js"
 
   cloudwatch_logs_retention_in_days = 30
   tracing_mode                      = "Active"

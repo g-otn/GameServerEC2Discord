@@ -1,5 +1,5 @@
 resource "aws_dlm_lifecycle_policy" "backup_data" {
-  description        = "Takes daily snapshots of server data EBS volumes and retains them for a week"
+  description        = "Takes daily snapshots of server data EBS volumes and retains them for ${var.data_volume_snapshot_retain_count} days"
   execution_role_arn = var.iam_role_dlm_lifecycle_arn
   state              = "ENABLED"
 

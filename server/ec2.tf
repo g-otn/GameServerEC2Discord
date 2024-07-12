@@ -12,10 +12,10 @@ locals {
     compose_main_service_name = local.game.compose_main_service_name
   }))
 
-  duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? templatefile("./server/ddns/duckdns/duck.sh", {
+  duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(templatefile("./server/ddns/duckdns/duck.sh", {
     duckdns_domain = local.duckdns_domain
     duckdns_token  = var.duckdns_token
-  }) : null
+  })) : null
   duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./server/ddns/duckdns/duck.service")) : null
 
   ec2_user_data = templatefile("./server/cloud-init.yml", {
@@ -39,13 +39,13 @@ locals {
   })
 
   instance_tags = {
-    Name                       = "${local.prefix_id_game} Spot Instance"
+    Name                       = "${local.prefix_sm_id_game} Spot Instance"
     "${local.prefix}:Related"  = true
     "${local.prefix}:Game"     = var.game
     "${local.prefix}:ServerId" = var.id
   }
   root_volume_tags = {
-    Name = "${local.prefix} Root Volume"
+    Name = "${local.prefix_id_game} Root Volume"
   }
 }
 

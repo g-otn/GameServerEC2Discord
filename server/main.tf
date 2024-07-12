@@ -1,8 +1,8 @@
 locals {
   module_name = basename(abspath(path.module))
 
-  prefix            = "SpotDiscord"
-  prefix_sm         = "SD"
+  prefix            = "GameServerEC2Discord"
+  prefix_sm         = "GSED"
   prefix_id_game    = "${local.prefix} ${var.id} ${var.game}"
   prefix_sm_id_game = "${local.prefix_sm} ${var.id} ${var.game}"
 
@@ -56,8 +56,8 @@ locals {
             VIEW_DISTANCE : 12
             MAX_PLAYERS : 15
 
-            INIT_MEMORY : "6100M"
-            MAX_MEMORY : "6100M"
+            INIT_MEMORY : "6200M"
+            MAX_MEMORY : "6200M"
           }, var.compose_game_environment)
           volumes : [
             "${local.server_data_path}:/data"

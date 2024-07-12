@@ -1,8 +1,8 @@
 locals {
   module_name = basename(abspath(path.module))
 
-  prefix    = "SpotDiscord"
-  prefix_sm = "SD"
+  prefix    = "GameServerEC2Discord"
+  prefix_sm = "GSED"
 
   user_ipv4_cidr = "${chomp(data.http.user_ipv4.response_body)}/32"
 

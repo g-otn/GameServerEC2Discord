@@ -1,10 +1,10 @@
 resource "aws_security_group" "instance" {
-  name        = "${local.prefix_id_game} Security Group"
+  name        = "${local.prefix_sm_id_game} Security Group"
   description = "Allow Game main port and custom ingress rules"
   vpc_id      = var.vpc_id
 
   tags = {
-    Name = "${local.prefix_id_game} Instance Security Group"
+    Name = "${local.prefix_sm_id_game} Instance Security Group"
   }
 }
 
@@ -15,6 +15,10 @@ resource "aws_vpc_security_group_ingress_rule" "main_port" {
   to_port           = local.game.main_port
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
+
+  tags = {
+    Name = "${local.game.game_name} Main Port SG Rule"
+  }
 }
 
 resource "aws_vpc_security_group_ingress_rule" "extra_ingress" {
@@ -29,6 +33,6 @@ resource "aws_vpc_security_group_ingress_rule" "extra_ingress" {
   cidr_ipv4   = each.value.cidr_ipv4
 
   tags = {
-    Name = "${each.key} SGR (${var.id})"
+    Name = "${each.key} SG Rule (${var.id})"
   }
 }

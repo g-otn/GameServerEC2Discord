@@ -1,7 +1,7 @@
 locals {
   base_cidr_block     = "10.0.0.0/16"
   public_subnets      = [for i in range(length(var.azs)) : cidrsubnet(local.base_cidr_block, 8, 101 + i)]
-  public_subnet_names = [for i in range(length(var.azs)) : "${local.prefix} Public Subnet ${i + 1}"]
+  public_subnet_names = [for i in range(length(var.azs)) : "${local.prefix_sm} Public Subnet ${i + 1}"]
 }
 
 module "vpc" {
@@ -19,7 +19,7 @@ module "vpc" {
 
   enable_flow_log                                 = true
   flow_log_cloudwatch_log_group_retention_in_days = 30
-  flow_log_cloudwatch_log_group_name_prefix       = "/aws/vpc-flow-log/${local.prefix}"
+  flow_log_cloudwatch_log_group_name_prefix       = "/aws/vpc-flow-log/${local.prefix}-"
   // https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-log-records
   flow_log_log_format = "$${az-id} $${subnet-id} $${interface-id} $${instance-id} $${pkt-src-aws-service} $${srcaddr} $${srcport} $${flow-direction} $${dstaddr} $${dstport} $${bytes} $${packets} $${protocol} $${start} $${end} $${action} $${log-status}"
 
@@ -27,25 +27,25 @@ module "vpc" {
   create_flow_log_cloudwatch_log_group = true
 
   public_route_table_tags = {
-    Name = "${local.prefix} Public Route Table"
+    Name = "${local.prefix_sm} Public Route Table"
   }
 
   igw_tags = {
-    Name = "${local.prefix} Internet Gateway"
+    Name = "${local.prefix_sm} Internet Gateway"
   }
 
-  default_route_table_name    = "${local.prefix} Default Route Table"
-  default_network_acl_name    = "${local.prefix} Default Network ACL"
-  default_security_group_name = "${local.prefix} Default Security Group"
+  default_route_table_name    = "${local.prefix_sm} Default Route Table"
+  default_network_acl_name    = "${local.prefix_sm} Default Network ACL"
+  default_security_group_name = "${local.prefix_sm} Default Security Group"
 }
 
 resource "aws_security_group" "instance_main" {
-  name        = "${local.prefix} Instance Main Security Group"
+  name        = "${local.prefix_sm} Instance Main Security Group"
   description = "Allow ICMP ping and SSH inbound traffic from admin IPv4, and all outbound traffic"
   vpc_id      = module.vpc.vpc_id
 
   tags = {
-    Name = "${local.prefix} Instance Main Security Group"
+    Name = "${local.prefix_sm} Instance Main Security Group"
   }
 }
 
@@ -59,7 +59,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ping" {
   cidr_ipv4 = local.user_ipv4_cidr
 
   tags = {
-    Name = "ICMP ping SGR"
+    Name = "ICMP ping SG Rule"
   }
 }
 
@@ -73,7 +73,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   cidr_ipv4 = local.user_ipv4_cidr
 
   tags = {
-    Name = "SSH SGR"
+    Name = "SSH SG Rule"
   }
 }
 
@@ -82,4 +82,9 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   description       = "Allow any outbound IPv4 traffic"
   ip_protocol       = "-1" # semantically equivalent to all ports
   cidr_ipv4         = "0.0.0.0/0"
+
+
+  tags = {
+    Name = "All outbound SG Rule"
+  }
 }

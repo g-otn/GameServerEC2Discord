@@ -1,6 +1,6 @@
 locals {
   module_name = basename(abspath(path.module))
 
-  prefix    = "SpotDiscord"
-  prefix_sm = "SD"
+  prefix    = "GameServerEC2Discord"
+  prefix_sm = "GSED"
 }

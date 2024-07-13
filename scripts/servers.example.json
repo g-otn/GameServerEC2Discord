@@ -1,0 +1,17 @@
+[
+  {
+    "gameServerId": "MyVanilla1",
+    "discordGuildId": "360606060606060606",
+    "choiceDisplayName": "Minecraft creative server"
+  },
+  {
+    "gameServerId": "MinecraftSurvival",
+    "discordGuildId": "360606060606060606",
+    "choiceDisplayName": "Minecraft survival server"
+  },
+  {
+    "gameServerId": "AnotherExample",
+    "discordGuildId": "360606060606060606",
+    "choiceDisplayName": "Another game server"
+  }
+]

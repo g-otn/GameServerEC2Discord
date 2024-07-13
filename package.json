@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "create-servers-file": "node --env-file=.env ./scripts/servers-from-tfstate",
     "setup-discord-app": "node --env-file=.env ./scripts/add-slash-commands"
   },
   "workspaces": [

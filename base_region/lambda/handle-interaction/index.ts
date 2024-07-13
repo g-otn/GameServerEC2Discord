@@ -58,7 +58,13 @@ const handleInteraction = async ({
 }: APIChatInputApplicationCommandInteraction): Promise<APIGatewayProxyResultV2> => {
   const command = data.name;
 
-  console.log('Publishing command', command, 'from interaction', data.id);
+  console.log(
+    'Publishing command',
+    command,
+    'on server',
+    'from interaction',
+    data.id
+  );
 
   // Publishing to SNS before returning a response creates a race condition where in
   // rare cases the SNS message may be published, consumed and the instance managed

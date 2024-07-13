@@ -19,7 +19,7 @@ variable "aws_secret_key" {
 # ----------------------------------------------------------------
 
 variable "ssh_public_key" {
-  description = "Public key data in 'Authorized Keys' format for SSH-ing with the instances"
+  description = "Public key data in 'Authorized Keys' format to allow SSH-ing into the instances"
   type        = string
 }
 

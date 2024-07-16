@@ -1,7 +1,7 @@
 resource "aws_security_group" "instance" {
   name        = "${local.prefix_sm_id_game} Security Group"
   description = "Allow Game main port and custom ingress rules"
-  vpc_id      = var.vpc_id
+  vpc_id      = var.base_region.vpc_id
 
   tags = {
     Name = "${local.prefix_sm_id_game} Instance Security Group"

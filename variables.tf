@@ -14,6 +14,12 @@ variable "aws_secret_key" {
   sensitive   = true
 }
 
+variable "base_global_provider_region" {
+  description = "AWS region in which to create the resources from base_global"
+  type        = string
+  default     = "us-east-1"
+}
+
 # ----------------------------------------------------------------
 # AWS variables
 # ----------------------------------------------------------------

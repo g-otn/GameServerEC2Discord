@@ -11,7 +11,7 @@ module "lambda_handle_interaction" {
   publish                    = true
   create_lambda_function_url = true
 
-  source_path = "base_region/lambda/handle-interaction/build/index.js"
+  source_path = "base_global/lambda/handle-interaction/build/index.js"
 
   cloudwatch_logs_retention_in_days = 30
   tracing_mode                      = "Active"
@@ -24,7 +24,7 @@ module "lambda_handle_interaction" {
   attach_tracing_policy = true
   attach_policies       = true
   number_of_policies    = 2
-  policies              = [var.iam_policy_publish_manager_topic_arn, local.xray_policy_arn]
+  policies              = [aws_iam_policy.publish_manager_topic.arn, local.xray_policy_arn]
 }
 
 module "lambda_manage_instance" {
@@ -40,7 +40,7 @@ module "lambda_manage_instance" {
 
   publish = true
 
-  source_path = "base_region/lambda/manage-instance/build/index.js"
+  source_path = "base_global/lambda/manage-instance/build/index.js"
 
   cloudwatch_logs_retention_in_days = 30
   tracing_mode                      = "Active"
@@ -54,7 +54,7 @@ module "lambda_manage_instance" {
   attach_tracing_policy = true
   attach_policies       = true
   number_of_policies    = 2
-  policies              = [var.iam_policy_manage_instance_arn, local.xray_policy_arn]
+  policies              = [aws_iam_policy.manage_instance.arn, local.xray_policy_arn]
 }
 
 resource "aws_lambda_permission" "with_sns" {

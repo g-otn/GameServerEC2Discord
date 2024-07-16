@@ -18,6 +18,7 @@ fs.writeFileSync(
   'scripts/servers.json',
   JSON.stringify(
     serverIds.map((id) => ({
+      region: '<AWS region here>',
       gameServerId: id,
       discordGuildId: '<Discord Guild ID here>',
       choiceDisplayName: '<Choice display name here>',

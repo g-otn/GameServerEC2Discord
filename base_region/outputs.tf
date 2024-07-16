@@ -1,23 +1,10 @@
-output "vpc_id" {
-  value = module.vpc.vpc_id
-}
-
-output "public_subnets" {
-  value = module.vpc.public_subnets
-}
-
-output "main_sg_id" {
-  value = aws_security_group.instance_main.id
-}
-
-output "key_pair_name" {
-  value = aws_key_pair.instance_ssh.key_name
-}
-
-output "available_azs" {
-  value = module.vpc.azs
-}
-
-output "region" {
-  value = var.region
+output "base_region" {
+  value = {
+    vpc_id         = module.vpc.vpc_id
+    public_subnets = module.vpc.public_subnets
+    main_sg_id     = aws_security_group.instance_main.id
+    key_pair_name  = aws_key_pair.instance_ssh.key_name
+    region         = var.region
+    available_azs  = module.vpc.azs
+  }
 }

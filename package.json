@@ -4,7 +4,7 @@
     "setup-discord-app": "node --env-file=.env ./scripts/add-slash-commands"
   },
   "workspaces": [
-    "./base_region/lambda/handle-interaction",
-    "./base_region/lambda/manage-instance"
+    "./base_global/lambda/handle-interaction",
+    "./base_global/lambda/manage-instance"
   ]
 }

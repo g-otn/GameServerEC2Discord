@@ -21,6 +21,8 @@ const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const DUCKDNS_DOMAIN = process.env.DUCKDNS_DOMAIN;
 const MINECRAFT_PORT = process.env.MINECRAFT_PORT;
 
+const DISCORD_BASE_URL = 'https://discord.com/api/v10';
+
 if (
   !DISCORD_APP_ID ||
   !DISCORD_BOT_TOKEN ||
@@ -31,10 +33,15 @@ if (
 }
 
 captureFetchGlobal();
-const ec2 = captureAWSv3Client(new EC2Client({}));
 
-const sendEC2Command = async (instanceId: string, command: string) => {
+const sendEC2Command = async (
+  instanceId: string,
+  region: string,
+  command: string
+) => {
   console.log('Executing command', command, 'on instance', instanceId);
+
+  const ec2 = captureAWSv3Client(new EC2Client({ region }));
 
   switch (command) {
     case 'start':
@@ -81,28 +88,38 @@ const sendEC2Command = async (instanceId: string, command: string) => {
   }
 };
 
+const parseMessageFromEvent = (event: SNSEvent) => {
+  try {
+    return JSON.parse(event.Records[0].Sns.Message);
+  } catch (err) {
+    console.error('Error parsing message:', err);
+    throw err;
+  }
+};
+
 /**
  * Main handler
  */
 export const handler: Handler<SNSEvent> = async (event) => {
-  const { command, interaction_id, interaction_token } = JSON.parse(
-    event.Records[0].Sns.Message
-  );
+  const { command, interactionId, interactionToken, serverId, instanceRegion } =
+    parseMessageFromEvent(event);
 
-  const message = await sendEC2Command(INSTANCE_ID, command).catch((err) => {
-    console.error('Error sending EC2 command:', err);
-    return `Error executing command:\n\`\`\`\n${err}\n\`\`\``;
-  });
+  const message = await sendEC2Command(instanceRegion, serverId, command).catch(
+    (err) => {
+      console.error('Error sending EC2 command:', err);
+      return `Error executing command:\n\`\`\`\n${err}\n\`\`\``;
+    }
+  );
 
   console.log(
     'Updating interaction',
-    interaction_id,
+    interactionId,
     'message with content:\n',
     message
   );
 
   await fetch(
-    `https://discord.com/api/v10/webhooks/${DISCORD_APP_ID}/${interaction_token}/messages/@original`,
+    `${DISCORD_BASE_URL}/webhooks/${DISCORD_APP_ID}/${interactionToken}/messages/@original`,
     {
       method: 'PATCH',
       headers: {

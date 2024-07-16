@@ -62,8 +62,8 @@ module "ec2_spot_instance" {
   ami           = coalesce(var.arch, local.game.arch) == "arm64" ? data.aws_ami.latest_al2023_arm64.id : data.aws_ami.latest_al2023_x86_64.id
   instance_type = coalesce(var.instance_type, local.game.instance_type)
 
-  vpc_security_group_ids = [var.main_sg_id, aws_security_group.instance.id]
-  subnet_id              = var.subnet_id
+  vpc_security_group_ids = [var.base_region.main_sg_id, aws_security_group.instance.id]
+  subnet_id              = local.subnet_id
 
   // We enable auto IPv4 via subnet settings (map_public_ip_on_launch)
   // instead of here to avoid force-replacement when applying while
@@ -71,7 +71,7 @@ module "ec2_spot_instance" {
   # associate_public_ip_address = true
 
   # monitoring = true
-  key_name = var.key_pair_name
+  key_name = var.base_region.key_pair_name
 
   spot_instance_interruption_behavior = "stop"
 

@@ -1,10 +1,15 @@
 locals {
-  module_name = basename(abspath(path.module))
+  common_tags = {
+    "${local.prefix}:Game" : var.game
+    "${local.prefix}:ServerId" : var.id
+  }
 
   prefix            = "GameServerEC2Discord"
   prefix_sm         = "GSED"
   prefix_id_game    = "${local.prefix} ${var.id} ${var.game}"
   prefix_sm_id_game = "${local.prefix_sm} ${var.id} ${var.game}"
+
+  subnet_id = var.base_region.public_subnets[index(var.base_region.available_azs, var.az)]
 
   duckdns_domain = var.ddns_service == "duckdns" ? regex("^([^.]+)\\.duckdns\\.org$", var.hostname)[0] : null
 

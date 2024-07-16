@@ -29,9 +29,14 @@ resource "aws_dlm_lifecycle_policy" "backup_data" {
     target_tags = {
       "${local.prefix}:DataVolume" = true
     }
+
+    parameters {
+      exclude_boot_volume = true
+    }
+
   }
 
   tags = {
-    Name = "${local.prefix} Server data backup Lifecycle Policy"
+    Name = "${local.prefix_id_game} Data volume backup Lifecycle Policy"
   }
 }

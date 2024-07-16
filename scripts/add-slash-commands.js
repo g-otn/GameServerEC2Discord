@@ -130,11 +130,11 @@ console.log('\nCreating commands');
 
 Object.entries(guildMap).forEach(([guildId, servers]) => {
   const serverIdChoices = servers.map(
-    ({ gameServerId, choiceDisplayName }) =>
+    ({ region, gameServerId, choiceDisplayName }) =>
       /** @type {import('../node_modules/discord-api-types/payloads/v10').APIApplicationCommandOptionChoice} */
       ({
         name: choiceDisplayName,
-        value: gameServerId,
+        value: `${region}|${gameServerId}`,
       })
   );
 

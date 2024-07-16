@@ -52,32 +52,17 @@ variable "main_port" {
 }
 
 # ----------------------------------------------------------------
-# AWS provider variables
-# ----------------------------------------------------------------
-
-variable "aws_access_key" {
-  description = "AWS Access Key for AWS provider"
-  type        = string
-}
-
-variable "aws_secret_key" {
-  description = "AWS Secret Key for AWS provider"
-  type        = string
-  sensitive   = true
-}
-
-variable "region" {
-  description = "AWS region in which to create the resources required by servers"
-  type        = string
-}
-
-# ----------------------------------------------------------------
 # AWS variables
 # ----------------------------------------------------------------
 
 variable "az" {
   description = "AWS availability zone in which to place the server instance in. Must be one of the azs defined in the chosen base_region"
   type        = string
+
+  validation {
+    condition     = contains(var.base_region.available_azs, var.az)
+    error_message = "AZ must be one of the available AZs in the chosen region"
+  }
 }
 
 variable "instance_type" {
@@ -121,6 +106,19 @@ variable "sg_ingress_rules" {
   }))
   default = {}
 }
+
+variable "data_volume_snapshot_retain_count" {
+  description = "How many snapshots to retain. Snapshots are taken daily, so the number will correspond to the number of days"
+  type        = number
+  default     = 7
+}
+
+variable "data_volume_snapshot_create_time" {
+  description = "The time to take the daily snapshot"
+  type        = string
+  default     = "07:39"
+}
+
 
 # ----------------------------------------------------------------
 # Docker compose variables
@@ -203,45 +201,21 @@ variable "noip_ddns_key_password" {
 }
 
 # ----------------------------------------------------------------
-# Discord variables
-# ----------------------------------------------------------------
-
-variable "discord_app_id" {
-  default = "Discord App ID for Discord API usage"
-  type    = string
-}
-
-variable "discord_app_public_key" {
-  description = "Discord App public key for webhook validation"
-  type        = string
-}
-
-variable "discord_bot_token" {
-  description = "Discord App bot token for Discord API auth"
-  type        = string
-  sensitive   = true
-}
-
-# ----------------------------------------------------------------
 # Base variables
 # ----------------------------------------------------------------
 
-variable "vpc_id" {
-  description = "VPC from base_region to associate the server resources with"
-  type        = string
+variable "base_region" {
+  description = "Common values"
+  type = object({
+    vpc_id         = string
+    public_subnets = list(string)
+    main_sg_id     = string
+    key_pair_name  = string
+    available_azs  = list(string)
+  })
 }
 
-variable "subnet_id" {
-  description = "Subnet to place the server instance in. Must be one from base_region VPC"
-  type        = string
-}
-
-variable "main_sg_id" {
-  description = "Security group ID with common security group rules (SSH and ICMP ping)"
-  type        = string
-}
-
-variable "key_pair_name" {
-  description = "Key pair for the server instance"
+variable "iam_role_dlm_lifecycle_arn" {
+  description = "Global; ARN of the IAM role that allows DLM to manage the lifecycle of the data volume snapshots"
   type        = string
 }

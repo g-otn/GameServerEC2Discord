@@ -166,7 +166,7 @@ Of course, if you use your AWS account for other things you need to account for 
 - DDNS service credentials, such as:
   - [Duck DNS](https://www.duckdns.org/about.jsp) account and domain
 - A SSH keypair for SSH-ing into your instance
-  - For example, the `.pub` file content (Authorized keys format) created from a command like `ssh-keygen -t ed25519 -C "GameServerEC2Discord"`
+  - For example, you can generate one by running: `ssh-keygen -t ed25519 -C "GameServerEC2Discord"` or using an online tool ([example](https://showdns.net/ssh-key-generator))
 
 ## Setup
 
@@ -175,8 +175,6 @@ Requirements:
 - Terraform 1.9+
 - Python 3.6+ (due to [terraform-aws-lambda](https://github.com/terraform-aws-modules/terraform-aws-lambda))
 - Node.js 18+ (to compile Lambda functions)
-
-Make sure you're running the commands in the following instructions from the top folder of the project, unless told otherwise.
 
 ### (Optional) Creating an AWS billing alarm
 
@@ -191,7 +189,7 @@ Please check this [tutorial](https://docs.aws.amazon.com/AmazonCloudWatch/latest
 1. Clone and navigate to the project:
 
 ```bash
-git clone https://github.com/g-otn/minecraft-spot-discord.git && cd minecraft-spot-discord
+git clone https://github.com/g-otn/GameServerEC2Discord.git && cd GameServerEC2Discord
 ```
 
 2. Initialize Terraform:
@@ -210,10 +208,10 @@ npm run build --workspaces
 ### Terraform variables
 
 4. Create a file named `terraform.tfvars` and fill the required variables.
-   - Check [`variables.tf`](variables.tf) to see which variables are required and their descriptions (see tables below too)
+   - Check the table below and [`variables.tf`](variables.tf) to see which variables are available and what is their purpose
    - Check [`example.tfvars`](example.tfvars) for a full example
 
-#### Required variables
+#### Required root module variables
 
 | Name                     | Description                                                                     |
 | ------------------------ | ------------------------------------------------------------------------------- |
@@ -223,14 +221,13 @@ npm run build --workspaces
 | `discord_app_id`         | Discord App ID for Discord API usage                                            |
 | `discord_app_public_key` | Discord App public key for webhook validation                                   |
 | `discord_bot_token`      | Discord App bot token for Discord API auth                                      |
+| `duckdns_token`          | Required if you're using Duck DNS. See [DDNS](#ddns)                            |
 
 After setting up the required variables, you still need to customize the `main.tf` file.
 
 ### Customize Terraform `main.tf` file
 
-<details open>
-
-  <summary>Customize Terraform `main.tf` file</summary>
+After filling
 
 #### About available modules
 
@@ -240,77 +237,18 @@ After setting up the required variables, you still need to customize the `main.t
 
 #### Required variables for each server module
 
-| Name       | Description                                                           |
-| ---------- | --------------------------------------------------------------------- |
-| `id`       | Unique alphanumeric id for the server                                 |
-| `game`     | The game this server is going to host                                 |
-| `region`   | Which region this server is going to be placed in                     |
-| `az`       | Which availability zone from the chosen region to place the server in |
-| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org")                |
+You'll need to set these for each server you want to create.
+
+| Name       | Description                                                            |
+| ---------- | ---------------------------------------------------------------------- |
+| `id`       | Unique alphanumeric id for the server                                  |
+| `game`     | The game this server is going to host                                  |
+| `az`       | Which availability zone from the chosen region to place the server in. |
+| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org")                 |
 
 Some other variables are required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 
 Other variables are also required but are the same between servers or/and regions. Check the [`main.tf`](main.tf) file and the [Examples](#examples).
-
-#### Regions
-
-This project supports multiple AWS regions, so you can have a server in `us-east-2` (Ohio) and another in `eu-north-1` (Frankfurt), for example.
-
-Keep in mind that some instance types are not available in every region. (e.g `r8g` family)
-So make sure to check the instance type chosen (or the default one from this project for the chosen game) is available in the region you want to place the server in.
-
-#### Server ports
-
-Any extra port besides ICMP, SSH and `main_port` you want to open needs to be set both in `sg_ingress_rules` (VPC Security group rules) and `compose_game_ports` (Docker compose service ports) variables in a way in which they match.
-
-<details>
-
-  <summary>Note about Minecraft ports</summary>
-
-By default the Minecraft container exposes port 25565, so if you want to run the server in another port you should either change only the host port (like `12345:25565` where 12345 is the custom port) or change the [`SERVER_PORT` variable](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#server).
-
-</details>
-
-#### DDNS
-
-The `ddns_service` can be used to set DDNS service to use. Currently only Duck DNS is supported. You may also disable it, which will make
-the server only accessible via its public IPv4 address, which changes each time the instance starts.
-
-You also have to set the `hostname` variable with the hostname which will be used.
-
-<details>
-  <summary>Duck DNS variables</summary>
-
-| Name            | Required | Description            |
-| --------------- | -------- | ---------------------- |
-| `duckdns_token` | Yes      | Duck DNS account token |
-
-</details>
-
-#### Server instance type
-
-Choosing the instance type is has significant impact on the performance of the game server and its cost.
-
-Each supported game comes with a default instance type, but it can be changed. Don't forget to update the relevant memory and docker variables to match the chosen instance type.
-
-What to consider mainly, when choosing:
-
-- CPU architecture (e.g `arm64` are generally cheaper but some games don't support it)
-- Available vCPU and RAM
-- CPU frequency (GHz)
-- Spot price
-- Spot interruption frequency (if it's too high there's more chance of the server going down while you're playing)
-
-For Minecraft, I'd recommend nothing less than 1 vCPU and 4GB RAM.
-
-To help choose a instance type different from the defaults, check out:
-
-- The [Vantage](https://instances.vantage.sh/?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large) website
-  - Tip: Hide Name, `Windows`-related, Network Performance, On-demand and Reserved columns; Show all `Linux Spot`-related, `Clock Speed` and `Physical Processor` columns; Sort by `Linux Spot Average cost`
-- [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/)
-- [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html)
-
-If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
 
 #### Examples
 
@@ -380,46 +318,6 @@ module "example_server" {
 
 </details>
 
-</details>
-
-### Recommendations and notes
-
-Please read if applicable!
-
-<details>
-  <summary>Minecraft (RAM, plugins)</summary>
-
-#### Recommended RAM
-
-In the variables you can set the JVM Heap size (`Xms` and `Xmx` options) via the `compose_game_environment` variable - [`INIT/MAX_MEMORY`](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#general-options) option
-and the Docker deploy resource memory limit before the OS kills your container via `compose_game_limits` - [`memory`](https://docs.docker.com/compose/compose-file/deploy/#resources). See [`example.tfvars`](example.tfvars)
-
-Firstly, around 200MB is not really available in the instance for usage.
-
-Then I recommended
-reserving at least 300MB for idle OS, Docker, etc to try prevent the instance from freezing. The remaining will be your Docker memory limit for the container. You could also not set a Docker limit at all.
-
-Finally, save around 600MiB-1GiB for the JVM / Off-heap memory. Examples:
-
-| Instance memory | Available memory | Docker limit (optional) | Heap size | Recommended players (Vanilla) |
-| --------------- | ---------------- | ----------------------- | --------- | ----------------------------- |
-| 2GiB            | 1.8GiB           | **1.6GB**               | **1GB**   | 1-2                           |
-| 4GiB            | 3.8GiB           | **3.6GB**               | **2.8GB** | 1-4                           |
-| 8GiB            | 7.8GiB           | **7.6GB**               | **6.2GB** | 2-8                           |
-
-#### Recommended Minecraft server plugins
-
-- [DiscordSRV](https://modrinth.com/plugin/discordsrv) - We're already using Discord, so why not? However it seems this plugin overrides the interactions, so you'll have to create another Discord app on the developer portal just for this. See [Installation](https://docs.discordsrv.com/installation/initial-setup)
-- [AFK-Kicker](https://modrinth.com/plugin/afk-kicker) - Or any other plugin which can kick afk players, so the server doesn't stays on if nobody is playing
-- [TabTPS](https://modrinth.com/plugin/tabtps) - Or any other plugin for easy in-game information display of server load, etc
-
-> [!TIP]
-> For Minecraft servers, once you run the docker compose once, you can
-> comment the `PLUGINS` option from the docker compose file inside the instance, to avoid errors
-> if the plugin every fails to download or check for updates. (Until of course, you want to add/remove a plugin)
-
-</details>
-
 ### Applying
 
 5. Run `terraform plan` and revise the resources to be created
@@ -427,7 +325,7 @@ Finally, save around 600MiB-1GiB for the JVM / Off-heap memory. Examples:
 6. Run `terraform apply` after a while the instance and the game server should be running and accessible
 
 > [!NOTE]  
-> For extra security, SSH-ing and ICMP pinging the instances are only accepted from IPv4 where the Terraform config was applied (e.g your computer). This means once your IPv4 changes, you must run `terraform apply` again to update the security groups rules or else you won't be able to ping / SSH.
+> For extra security, SSH-ing and ICMP pinging the instances are only accepted from IPv4 where the Terraform config was applied (e.g your computer). This means once your IPv4 changes, you must run `terraform apply` again to update the security groups rules, or do it manually. Otherwise you won't be able to ping / SSH.
 
 </details>
 
@@ -505,14 +403,117 @@ Daily snapshots of the data volume are taken via Data Lifecycle Manager. However
 
 14. If applicable, enable the STS regional endpoint for the regions you're using via the [IAM Console](https://us-east-1.console.aws.amazon.com/iam/home?#/account_settings). See [Activating and deactivating AWS STS in an AWS Region](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
 
+## Recommendations and notes
+
+Please read if applicable!
+
+<details>
+  <summary>Minecraft (RAM, plugins)</summary>
+
+### Recommended RAM
+
+In the variables you can set the JVM Heap size (`Xms` and `Xmx` options) via the `compose_game_environment` variable - [`INIT/MAX_MEMORY`](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#general-options) option
+and the Docker deploy resource memory limit before the OS kills your container via `compose_game_limits` - [`memory`](https://docs.docker.com/compose/compose-file/deploy/#resources). See [`example.tfvars`](example.tfvars)
+
+Firstly, around 200MB is not really available in the instance for usage.
+
+Then I recommended
+reserving at least 300MB for idle OS, Docker, etc to try prevent the instance from freezing. The remaining will be your Docker memory limit for the container. You could also not set a Docker limit at all.
+
+Finally, save around 600MiB-1GiB for the JVM / Off-heap memory. Examples:
+
+| Instance memory | Available memory | Docker limit (optional) | Heap size | Recommended players (Vanilla) |
+| --------------- | ---------------- | ----------------------- | --------- | ----------------------------- |
+| 2GiB            | 1.8GiB           | **1.6GB**               | **1GB**   | 1-2                           |
+| 4GiB            | 3.8GiB           | **3.6GB**               | **2.8GB** | 1-4                           |
+| 8GiB            | 7.8GiB           | **7.6GB**               | **6.2GB** | 2-8                           |
+
+### Recommended Minecraft server plugins
+
+- [DiscordSRV](https://modrinth.com/plugin/discordsrv) - We're already using Discord, so why not? However it seems this plugin overrides the interactions, so you'll have to create another Discord app on the developer portal just for this. See [Installation](https://docs.discordsrv.com/installation/initial-setup)
+- [AFK-Kicker](https://modrinth.com/plugin/afk-kicker) - Or any other plugin which can kick afk players, so the server doesn't stays on if nobody is playing
+- [TabTPS](https://modrinth.com/plugin/tabtps) - Or any other plugin for easy in-game information display of server load, etc
+
+> [!TIP]
+> For Minecraft servers, once you run the docker compose once, you can
+> comment the `PLUGINS` option from the docker compose file inside the instance, to avoid errors
+> if the plugin every fails to download or check for updates. (Until of course, you want to add/remove a plugin)
+
+</details>
+
+### Regions
+
+Sometimes you want to change the AWS region you server is located at, due to ping and/or price. By default this project
+configures `us-east-2` (Ohio) which is generally cheap.
+
+This project supports multiple AWS regions, so you can have a server in `us-east-2` (Ohio) and another two in `eu-north-1` (Frankfurt), for example.
+
+**Before creating servers in another region**
+
+- Check if the instance type for your server supported
+  - Some instance types are not available in every region. (e.g `r8g` family)
+  - You should check the default instance type by viewing the `local.game_defaults` in [server/ec2.tf](server/ec2.tf)
+  - You should check the `instance_type` server module variable to override the default values.
+
+To configure a new region to place y
+
+### Server ports
+
+Any extra port besides ICMP, SSH and `main_port` you want to open needs to be set both in `sg_ingress_rules` (VPC Security group rules) and `compose_game_ports` (Docker compose service ports) variables in a way in which they match.
+
+<details>
+
+  <summary>Note about Minecraft ports</summary>
+
+By default the Minecraft container exposes port 25565, so if you want to run the server in another port you should either change only the host port (like `12345:25565` where 12345 is the custom port) or change the [`SERVER_PORT` variable](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#server).
+
+</details>
+
+### DDNS
+
+The `ddns_service` server module variable can be used to set which DDNS service to use for that server. Currently only Duck DNS is supported.
+
+You may also disable it, which will make
+the server only accessible via its public IPv4 address, which changes each time the instance starts.
+
+You also have to set the `hostname` variable with the hostname which will be used.
+
+<details>
+  <summary>Duck DNS variables</summary>
+
+| Name            | Required | Description            |
+| --------------- | -------- | ---------------------- |
+| `duckdns_token` | Yes      | Duck DNS account token |
+
+</details>
+
+### Server instance type
+
+Choosing the instance type is has significant impact on the performance of the game server and its cost.
+
+Each supported game comes with a default instance type, but it can be changed. Don't forget to update the relevant memory and docker variables to match the chosen instance type.
+
+What to consider mainly, when choosing:
+
+- CPU architecture (e.g `arm64` are generally cheaper but some games don't support it)
+- Available vCPU and RAM
+- CPU frequency (GHz)
+- Spot price
+- Spot interruption frequency (if it's too high there's more chance of the server going down while you're playing)
+
+For Minecraft, I'd recommend nothing less than 1 vCPU and 4GB RAM.
+
+To help choose a instance type different from the defaults, check out:
+
+- The [Vantage](https://instances.vantage.sh/?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large) website
+  - Tip: Hide Name, `Windows`-related, Network Performance, On-demand and Reserved columns; Show all `Linux Spot`-related, `Clock Speed` and `Physical Processor` columns; Sort by `Linux Spot Average cost`
+  - Grouping "Cost" by "Daily" can facilitate visualize how much (the instance alone) would cost for 24h of gameplay.
+- [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/)
+- [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html)
+
+If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
+
 ## Troubleshooting
-
-#### CloudWatch
-
-CloudWatch log groups are created for the Lambda and VPC flow logs.
-They can help you troubleshoot problems with connectivity and Discord interactions.
-
-X-Ray tracing is also enabled (mainly for debugging the project), however you need to [manually set up SNS](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sns.html#xray-services-sns-configuration) permissions so the traces show up correctly in the Trace Map / etc.
 
 #### Useful info and commands
 
@@ -533,6 +534,13 @@ Commands (using Minecraft server as an example):
 
 Your SSH client may give you a warning when connecting due to the IP changing between server restarts.
 You can delete the `~/.ssh/known_hosts` file as a quick workaround.
+
+#### CloudWatch
+
+CloudWatch log groups are created for the Lambda and VPC flow logs.
+They can help you troubleshoot problems with connectivity and Discord interactions.
+
+X-Ray tracing is also enabled (mainly for debugging the project), however you need to [manually set up SNS](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sns.html#xray-services-sns-configuration) permissions so the traces show up correctly in the Trace Map / etc.
 
 ## To-do
 

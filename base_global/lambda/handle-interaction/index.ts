@@ -10,6 +10,7 @@ import {
   InteractionType,
   type APIInteractionResponsePong,
   APIInteractionResponseDeferredChannelMessageWithSource,
+  APIApplicationCommandInteractionDataStringOption,
 } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
 import { captureAWSv3Client } from 'aws-xray-sdk-core';
@@ -58,14 +59,18 @@ const handleInteraction = async ({
 }: APIChatInputApplicationCommandInteraction): Promise<APIGatewayProxyResultV2> => {
   const command = data.name;
 
-  console.log(
-    'Publishing command',
-    command,
-    'on server',
-    'from interaction',
-    data.id
-  );
+  const value = (
+    data.options?.find(
+      (o) => o.name === 'server'
+    ) as APIApplicationCommandInteractionDataStringOption
+  )?.value;
+  console.log('Value:', value);
 
+  const [region, serverId] = value.split('|');
+
+  console.log(
+    `Publishing command ${command} on server ${serverId} in region ${region} from interaction ${id}`
+  );
   // Publishing to SNS before returning a response creates a race condition where in
   // rare cases the SNS message may be published, consumed and the instance managed
   // before the interaction is ready for follow-up.
@@ -74,9 +79,12 @@ const handleInteraction = async ({
     new PublishCommand({
       TopicArn: MANAGER_INSTRUCTION_SNS_TOPIC_ARN,
       Message: JSON.stringify({
-        interaction_id: id,
-        interaction_token: token,
+        interactionId: id,
+        interactionToken: token,
         command,
+        serverId,
+        region,
+        instanceRegion: region,
       }),
     })
   );

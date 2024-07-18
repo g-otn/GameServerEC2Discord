@@ -16,13 +16,13 @@ const mapServersToGuildMap = (data) => {
   const guildMap = {};
 
   data.forEach((item, i) => {
-    const { discordGuildId, gameServerId, choiceDisplayName } = item;
+    const { region, discordGuildId, gameServerId, choiceDisplayName } = item;
 
-    if (!discordGuildId || !gameServerId || !choiceDisplayName) {
+    if (!region || !discordGuildId || !gameServerId || !choiceDisplayName) {
       throw new Error(
         `Server ${i + 1}/${
           data.length
-        } missing Discord Guild ID (${discordGuildId}), game server ID (${gameServerId}) or/and choice display name (${choiceDisplayName})`
+        } missing Region (${region}, Discord Guild ID (${discordGuildId}), game server ID (${gameServerId}) or/and choice display name (${choiceDisplayName})`
       );
     }
 
@@ -31,6 +31,7 @@ const mapServersToGuildMap = (data) => {
     }
 
     guildMap[discordGuildId].push({
+      region,
       gameServerId,
       choiceDisplayName,
     });

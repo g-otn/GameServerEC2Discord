@@ -176,7 +176,7 @@ Requirements:
 - Python 3.6+ (due to [terraform-aws-lambda](https://github.com/terraform-aws-modules/terraform-aws-lambda))
 - Node.js 18+ (to compile Lambda functions)
 
-### (Optional) Creating an AWS billing alarm
+### (Recommended) Creating an AWS billing alarm
 
 It's recommended to set up a billing alarm on your AWS account to avoid unwanted surprises in case the servers start get way more expensive than estimated, somehow.
 
@@ -541,6 +541,7 @@ CloudWatch log groups are created for the Lambda and VPC flow logs.
 They can help you troubleshoot problems with connectivity and Discord interactions.
 
 X-Ray tracing is also enabled (mainly for debugging the project), however you need to [manually set up SNS](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sns.html#xray-services-sns-configuration) permissions so the traces show up correctly in the Trace Map / etc.
+_Or else the trace will stop at SNS and a new trace will begin in the Lamba context_
 
 ## To-do
 

@@ -18,71 +18,90 @@ import { RESTPatchAPIInteractionOriginalResponseJSONBody } from 'discord-api-typ
 
 const DISCORD_APP_ID = process.env.DISCORD_APP_ID;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-const DUCKDNS_DOMAIN = process.env.DUCKDNS_DOMAIN;
-const MINECRAFT_PORT = process.env.MINECRAFT_PORT;
 
 const DISCORD_BASE_URL = 'https://discord.com/api/v10';
 
-if (
-  !DISCORD_APP_ID ||
-  !DISCORD_BOT_TOKEN ||
-  !DUCKDNS_DOMAIN ||
-  !MINECRAFT_PORT
-) {
+if (!DISCORD_APP_ID || !DISCORD_BOT_TOKEN) {
   throw new Error('Missing env vars');
 }
 
 captureFetchGlobal();
 
 const sendEC2Command = async (
-  instanceId: string,
+  serverId: string,
   region: string,
   command: string
 ) => {
-  console.log('Executing command', command, 'on instance', instanceId);
+  console.log(
+    'Searching instance with server ID',
+    serverId,
+    'on region',
+    region
+  );
 
   const ec2 = captureAWSv3Client(new EC2Client({ region }));
+
+  const result = await ec2.send(
+    new DescribeInstancesCommand({
+      Filters: [
+        { Name: `tag:GameServerEC2Discord:ServerId`, Values: [serverId] },
+      ],
+    })
+  );
+
+  const instance = result.Reservations?.[0]?.Instances?.[0];
+
+  if (!instance?.InstanceId) {
+    return `Instance with server ID ${serverId} not found on region ${region}`;
+  }
+
+  const instanceId = instance.InstanceId;
+
+  console.log('Executing command', command, 'on instance', serverId);
 
   switch (command) {
     case 'start':
       return ec2
         .send(new StartInstancesCommand({ InstanceIds: [instanceId] }))
-        .then((result) => 'Starting...');
+        .then((result) => {
+          console.log('result', result);
+          return 'Starting...';
+        });
     case 'stop':
       return ec2
         .send(new StopInstancesCommand({ InstanceIds: [instanceId] }))
-        .then((result) => 'Stopping...');
+        .then((result) => {
+          console.log('result', result);
+          return 'Stopping...';
+        });
     case 'restart':
       return ec2
         .send(new RebootInstancesCommand({ InstanceIds: [instanceId] }))
-        .then((result) => 'Restarting...');
+        .then((result) => {
+          console.log('result', result);
+          return 'Rebooting...';
+        });
     case 'ip':
     case 'status':
-      return ec2
-        .send(new DescribeInstancesCommand({ InstanceIds: [instanceId] }))
-        .then((result) => {
-          if (!result?.Reservations?.[0].Instances?.[0]) {
-            return 'No data';
-          }
+      const { PublicDnsName, PublicIpAddress, State } = instance;
 
-          const { PublicDnsName, PublicIpAddress, State } =
-            result.Reservations[0].Instances[0];
+      if (command === 'status') {
+        return `State: ${State?.Name}`;
+      }
 
-          if (command === 'status') {
-            return `State: ${State?.Name}`;
-          }
+      const mainPort = instance.Tags?.find(
+        (t) => t.Key === 'GameServerEC2Discord:MainPort'
+      )?.Value;
+      const hostname = instance.Tags?.find(
+        (t) => t.Key === 'GameServerEC2Discord:Hostname'
+      )?.Value;
 
-          return (
-            `Addresses:\n` +
-            (PublicIpAddress
-              ? `- **\`${PublicIpAddress}:${MINECRAFT_PORT}\`**\n`
-              : '') +
-            (PublicDnsName
-              ? `- \`${PublicDnsName}:${MINECRAFT_PORT}\`\n`
-              : '') +
-            `- \`${DUCKDNS_DOMAIN}.duckdns.org:${MINECRAFT_PORT}\``
-          );
-        });
+      return (
+        `Addresses:\n` +
+        (PublicIpAddress ? `- **\`${PublicIpAddress}:${mainPort}\`**\n` : '') +
+        (PublicDnsName ? `- \`${PublicDnsName}:${mainPort}\`\n` : '') +
+        `- \`${hostname}:${mainPort}\``
+      );
     default:
       return 'Unknown command';
   }
@@ -104,7 +123,7 @@ export const handler: Handler<SNSEvent> = async (event) => {
   const { command, interactionId, interactionToken, serverId, instanceRegion } =
     parseMessageFromEvent(event);
 
-  const message = await sendEC2Command(instanceRegion, serverId, command).catch(
+  const message = await sendEC2Command(serverId, instanceRegion, command).catch(
     (err) => {
       console.error('Error sending EC2 command:', err);
       return `Error executing command:\n\`\`\`\n${err}\n\`\`\``;
@@ -140,6 +159,9 @@ export const handler: Handler<SNSEvent> = async (event) => {
     })
     .catch((err) => {
       console.log('Error sending message:', err);
-      throw err;
+      // For some reason, node-fetch succeds on request but still throws errors afterwards when calling res.json():
+      // `Error sending message: TypeError: Illegal invocation [...] webidl.[...]`
+      // So let's just avoid throwing the error to avoid SNS retries
+      // throw err;
     });
 };

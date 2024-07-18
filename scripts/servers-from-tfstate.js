@@ -1,26 +1,30 @@
 const fs = require('fs');
 const execSync = require('child_process').execSync;
 
-const resourcePattern =
+const resourceRegex =
   /^(.+\.module\.ec2_spot_instance\.aws_spot_instance_request\..+)$/gm;
 
 console.log('Listing terraform state');
 const output = execSync('terraform state list', { encoding: 'utf-8' });
 
-const serverResources = [...output.matchAll(resourcePattern)].map((m) => m[1]);
+const serverResources = [...output.matchAll(resourceRegex)].map((m) => m[1]);
 
 console.log('Server spot instance requests found:', serverResources);
-const serversIdRegex = /"GameServerEC2Discord:ServerId".+"(.+)"/g;
-const serversRegionRegex = /"GameServerEC2Discord:Region".+"(.+)"/g;
+const serversIdRegex = /"GameServerEC2Discord:ServerId".+"(.+)"/;
+const serversRegionRegex = /"GameServerEC2Discord:Region".+"(.+)"/;
 
-const stateData = serverResources.map((r) => {
-  console.log('Showing resource', r);
-  const output = execSync('terraform state show ' + r, { encoding: 'utf-8' });
+const stateData = serverResources.map((r, i) => {
+  console.log('Showing resource', i, r);
+  const resourceOutput = execSync('terraform state show ' + r, {
+    encoding: 'utf-8',
+  });
 
-  return {
-    serverId: serversIdRegex.exec(output)?.[1],
-    region: serversRegionRegex.exec(output)?.[1],
-  };
+  const serverId = resourceOutput.match(serversIdRegex)?.[1];
+  const region = resourceOutput.match(serversRegionRegex)?.[1];
+
+  console.log('Found for', i, { serverId, region });
+
+  return { serverId, region };
 });
 
 console.log('server data found', stateData);

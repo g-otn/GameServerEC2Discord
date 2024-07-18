@@ -9,7 +9,7 @@ resource "aws_iam_policy" "publish_manager_topic" {
         Action = [
           "sns:Publish"
         ],
-        Resource = "arn:aws:ec2:*:*:instance/*",
+        Resource = module.manager_instruction_sns_topic.topic_arn,
         Condition = {
           StringEquals = { "aws:ResourceTag/${local.prefix}:Related" = "true" }
         }

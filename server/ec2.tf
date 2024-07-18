@@ -45,6 +45,7 @@ locals {
     "${local.prefix}:ServerId" = var.id
     "${local.prefix}:Hostname" = var.hostname
     "${local.prefix}:Region"   = data.aws_region.default.name
+    "${local.prefix}:MainPort" = local.game.main_port
   }
   root_volume_tags = {
     Name = "${local.prefix_id_game} Root Volume"
@@ -94,6 +95,7 @@ module "ec2_spot_instance" {
     "${local.prefix}:ServerId" = var.id
     "${local.prefix}:Hostname" = var.hostname
     "${local.prefix}:Region"   = data.aws_region.default.name
+    "${local.prefix}:MainPort" = local.game.main_port
   }
 }
 resource "aws_ec2_tag" "instance_tags_workaround" {

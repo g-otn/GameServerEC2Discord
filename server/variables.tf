@@ -81,7 +81,7 @@ variable "arch" {
   default     = null
   validation {
     condition     = var.instance_type != null ? (var.arch == "arm64" || var.arch == "x86_64") : var.arch == null
-    error_message = "Arch must be 'arm64' or 'x86_64'"
+    error_message = "When specifiying instance type, you must specify arch too. Arch must be 'arm64' or 'x86_64'"
   }
 }
 

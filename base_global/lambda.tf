@@ -46,9 +46,8 @@ module "lambda_manage_instance" {
   tracing_mode                      = "Active"
 
   environment_variables = {
-    DISCORD_APP_ID         = var.discord_app_id
-    DISCORD_APP_PUBLIC_KEY = var.discord_app_public_key
-    DISCORD_BOT_TOKEN      = var.discord_bot_token
+    DISCORD_APP_ID    = var.discord_app_id
+    DISCORD_BOT_TOKEN = var.discord_bot_token
   }
 
   attach_tracing_policy = true

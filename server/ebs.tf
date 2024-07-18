@@ -6,6 +6,8 @@ resource "aws_ebs_volume" "server_data" {
   iops              = 3000
   throughput        = 125
 
+  snapshot_id = var.snapshot_id
+
   final_snapshot = true
 
   tags = {

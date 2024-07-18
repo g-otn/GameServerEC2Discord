@@ -95,6 +95,12 @@ variable "data_volume_size" {
   }
 }
 
+variable "snapshot_id" {
+  description = "The snapshot ID to use for the data volume. Can be used to restore backups"
+  type        = string
+  default     = null
+}
+
 variable "sg_ingress_rules" {
   description = "Extra ingress rules to add to the instance security group, besides the main port"
   type = map(object({

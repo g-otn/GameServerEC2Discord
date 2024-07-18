@@ -110,13 +110,13 @@ variable "sg_ingress_rules" {
 variable "data_volume_snapshot_retain_count" {
   description = "How many snapshots to retain. Snapshots are taken daily, so the number will correspond to the number of days"
   type        = number
-  default     = 7
+  default     = 5
 }
 
 variable "data_volume_snapshot_create_time" {
-  description = "The time to take the daily snapshot"
+  description = "The time to take the daily snapshot (UTC)"
   type        = string
-  default     = "07:39"
+  default     = "09:39"
 }
 
 

@@ -44,6 +44,7 @@ locals {
     "${local.prefix}:Game"     = var.game
     "${local.prefix}:ServerId" = var.id
     "${local.prefix}:Hostname" = var.hostname
+    "${local.prefix}:Region"   = data.aws_region.default.name
   }
   root_volume_tags = {
     Name = "${local.prefix_id_game} Root Volume"
@@ -88,7 +89,11 @@ module "ec2_spot_instance" {
   #   }
   # }]
   tags = {
-    Name = "${local.prefix_id_game} Spot Instance Request"
+    Name                       = "${local.prefix_sm_id_game} Spot Instance Request"
+    "${local.prefix}:Game"     = var.game
+    "${local.prefix}:ServerId" = var.id
+    "${local.prefix}:Hostname" = var.hostname
+    "${local.prefix}:Region"   = data.aws_region.default.name
   }
 }
 resource "aws_ec2_tag" "instance_tags_workaround" {

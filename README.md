@@ -225,7 +225,7 @@ npm run build --workspaces
 
 After setting up the required variables, you still need to customize the `main.tf` file.
 
-### Customize Terraform `main.tf` file
+### Customize AWS regions and servers
 
 After filling
 
@@ -239,12 +239,12 @@ After filling
 
 You'll need to set these for each server you want to create.
 
-| Name       | Description                                                            |
-| ---------- | ---------------------------------------------------------------------- |
-| `id`       | Unique alphanumeric id for the server                                  |
-| `game`     | The game this server is going to host                                  |
-| `az`       | Which availability zone from the chosen region to place the server in. |
-| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org")                 |
+| Name       | Description                                                                    |
+| ---------- | ------------------------------------------------------------------------------ |
+| `id`       | Unique alphanumeric id for the server                                          |
+| `game`     | The game this server is going to host. Valid values: `minecraft`, `custom`     |
+| `az`       | Which availability zone from the chosen region to place the server in.         |
+| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required if using DDNS |
 
 Some other variables are required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 

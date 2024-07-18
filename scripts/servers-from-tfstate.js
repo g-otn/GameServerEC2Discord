@@ -1,29 +1,40 @@
 const fs = require('fs');
+const execSync = require('child_process').execSync;
 
-const TF_STATE_PATH = process.env.TF_STATE_PATH || 'terraform.tfstate';
+const resourcePattern =
+  /^(.+\.module\.ec2_spot_instance\.aws_spot_instance_request\..+)$/gm;
 
-const serverIdsRegex = /"GameServerEC2Discord:ServerId": "(.+)"/g;
+console.log('Listing terraform state');
+const output = execSync('terraform state list', { encoding: 'utf-8' });
 
-console.log('Reading', TF_STATE_PATH);
+const serverResources = [...output.matchAll(resourcePattern)].map((m) => m[1]);
 
-const state = fs.readFileSync(TF_STATE_PATH, 'utf8');
+console.log('Server spot instance requests found:', serverResources);
+const serversIdRegex = /"GameServerEC2Discord:ServerId".+"(.+)"/g;
+const serversRegionRegex = /"GameServerEC2Discord:Region".+"(.+)"/g;
 
-const matchesGroup1 = [...state.matchAll(serverIdsRegex)].map((m) => m[1]);
+const stateData = serverResources.map((r) => {
+  console.log('Showing resource', r);
+  const output = execSync('terraform state show ' + r, { encoding: 'utf-8' });
 
-const serverIds = [...new Set(matchesGroup1)];
+  return {
+    serverId: serversIdRegex.exec(output)?.[1],
+    region: serversRegionRegex.exec(output)?.[1],
+  };
+});
 
-console.log('serverIds found', serverIds);
+console.log('server data found', stateData);
 
-fs.writeFileSync(
-  'scripts/servers.json',
-  JSON.stringify(
-    serverIds.map((id) => ({
-      region: '<AWS region here>',
-      gameServerId: id,
-      discordGuildId: '<Discord Guild ID here>',
-      choiceDisplayName: '<Choice display name here>',
-    })),
-    null,
-    '  '
-  )
+const fileData = JSON.stringify(
+  stateData.map(({ region, serverId }) => ({
+    region: region || '<AWS Region here>',
+    gameServerId: serverId || '<Game Server ID here>',
+    discordGuildId: '<Discord Guild ID here>',
+    choiceDisplayName: '<Choice display name here>',
+  })),
+  null,
+  '  '
 );
+
+fs.writeFileSync('scripts/servers.json', fileData);
+console.log('scripts/servers.json created');

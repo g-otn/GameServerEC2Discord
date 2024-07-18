@@ -29,11 +29,6 @@ resource "aws_dlm_lifecycle_policy" "backup_data" {
     target_tags = {
       "${local.prefix}:DataVolume" = true
     }
-
-    parameters {
-      exclude_boot_volume = true
-    }
-
   }
 
   tags = {

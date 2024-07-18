@@ -47,3 +47,5 @@ data "aws_ami" "latest_al2023_arm64" {
     values = ["al2023-ami-2023*"]
   }
 }
+
+data "aws_region" "default" {}

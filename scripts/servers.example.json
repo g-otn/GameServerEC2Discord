@@ -1,0 +1,20 @@
+[
+  {
+    "region": "us-east-2",
+    "gameServerId": "ExampleVanilla",
+    "discordGuildId": "360606060606060606",
+    "choiceDisplayName": "Minecraft creative server"
+  },
+  {
+    "region": "us-east-1",
+    "gameServerId": "MinecraftSurvival",
+    "discordGuildId": "360606060606060606",
+    "choiceDisplayName": "Minecraft survival server"
+  },
+  {
+    "region": "us-east-2",
+    "gameServerId": "AnotherExample",
+    "discordGuildId": "360606060606060606",
+    "choiceDisplayName": "Another game server"
+  }
+]

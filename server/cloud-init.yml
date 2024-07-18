@@ -1,0 +1,116 @@
+#cloud-config
+packages:
+  - htop
+  - docker
+  - conntrack
+
+bootcmd:
+  # cloud-init runs before EBS volume mount (sometimes?), so we have to wait. See https://stackoverflow.com/a/77868589/11138267
+  - echo "$(date --rfc-3339=ns) | Waiting for EBS volume device to be available"
+  - echo "$(lsblk)"
+  - timeout 30s sh -c 'while [ ! -e ${device_name} ]; do sleep 1; done'
+  - echo "$(date --rfc-3339=ns) | Device found"
+  - echo "$(lsblk)"
+
+# %{~ if can(coalesce(timezone)) ~}
+timezone: ${timezone}
+# %{~ endif ~}
+
+device_aliases: { "data": "${device_name}" }
+disk_setup:
+  data:
+    table_type: gpt
+    layout: true
+    overwrite: true
+
+fs_setup:
+  - device: data
+    label: Server_Data
+    filesystem: xfs
+    partition: any
+    overwrite: true
+
+mounts:
+  - ["data", "${server_data_path}", "xfs", "defaults,nofail", "0", "2"]
+
+write_files:
+  # Auto start files
+  - path: /etc/systemd/system/compose_start.service
+    defer: true
+    encoding: base64
+    content: ${compose_start_file_content_b64}
+  - path: ${server_data_path}/docker-compose.yml
+    owner: ec2-user
+    defer: true
+    encoding: base64
+    content: ${compose_file_content_b64}
+
+# %{~ if auto_shutdown ~}
+  # Auto shutdown files
+  - path: /home/ec2-user/auto_shutdown.sh
+    defer: true
+    owner: ec2-user
+    permissions: "0744"
+    encoding: base64
+    content: ${auto_shutdown_script_file_content_b64}
+  - path: /etc/systemd/system/auto_shutdown.service
+    defer: true
+    encoding: base64
+    content: ${auto_shutdown_service_file_content_b64}
+  - path: /etc/systemd/system/auto_shutdown.timer
+    defer: true
+    encoding: base64
+    content: ${auto_shutdown_timer_file_content_b64}
+# %{~ endif ~}
+
+# %{~ if ddns_service == "duckdns" ~}
+  # Duck DNS files
+  - path: /home/ec2-user/duck.sh
+    permissions: "0744"
+    owner: ec2-user
+    defer: true
+    encoding: base64
+    content: ${duckdns_script_file_content_b64}
+  - path: /etc/systemd/system/duck.service
+    defer: true
+    encoding: base64
+    content: ${duckdns_service_file_content_b64}
+# %{~ endif ~}
+
+runcmd:
+  # - lsblk
+  # - cat /etc/fstab
+  - systemctl daemon-reload
+
+  # Fix permissions
+  - chown ec2-user:ec2-user -R ${server_data_path}
+
+  # Manually install Docker Compose plugin
+  - mkdir -p /usr/local/lib/docker/cli-plugins
+  - [
+      curl,
+      -SL,
+      "https://github.com/docker/compose/releases/download/v2.27.3/docker-compose-linux-aarch64",
+      -o,
+      /usr/local/lib/docker/cli-plugins/docker-compose,
+    ]
+  - chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+  # Finish Docker setup
+  - usermod -a -G docker ec2-user # Allow docker commands without sudo
+  - systemctl enable docker
+  - systemctl start docker
+
+# %{~ if ddns_service == "duckdns" ~}
+  # Finish Duck DNS setup
+  - systemctl enable duck.service
+  - systemctl start duck.service
+# %{~ endif ~}
+
+  # Start for the first time
+  - systemctl enable compose_start
+  - systemctl start compose_start
+# %{~ if auto_shutdown ~}
+  - systemctl enable auto_shutdown.timer
+  - systemctl start auto_shutdown.timer
+# %{~ endif ~}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Runs auto_shutdown check every 2 minutes
+After=compose_start.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+Unit=auto_shutdown.service
+
+[Install]
+WantedBy=timers.target

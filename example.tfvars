@@ -30,7 +30,7 @@ minecraft_compose_environment = {
   "MAX_MEMORY"  = "6000M"
 
   "ICON" = "https://picsum.photos/300/300"
-  "MOTD" = "     \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r \u00A75\u00A7lMinecraft Spot Discord\u00A7r \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r"
+  "MOTD" = "     \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r \u00A75\u00A7lGame EC2 Spot Discord\u00A7r \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r"
 
   "VERSION"     = "1.20.4"
   "ONLINE_MODE" = false

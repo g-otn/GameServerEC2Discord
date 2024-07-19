@@ -17,36 +17,49 @@ Made for and tested with personal and small servers with few players.
   - [Always Free offers](#always-free-offers)
 - [Prerequisites](#prerequisites)
 - [Setup](#Setup)
-  - [Initial setup](#initial-setup)
+  - [(Recommended) Creating an AWS billing alarm](#recommended-creating-an-aws-billing-alarm)
+  - [Project setup](#project-setup)
   - [Terraform variables](#terraform-variables)
-    - [Server ports](#server-ports)
-    - [Instance type](#instance-type)
-    - [Recommended RAM](#recommended-ram)
-    - [Recommended Minecraft server plugins](#recommended-Minecraft-server-plugins)
+    - [Required root module variables](#required-root-module-variables)
+  - [Specify AWS regions and servers via Terraform](#specify-aws-regions-and-servers-via-terraform)
+    - [Required variables for each server module](#required-variables-for-each-server-module)
+    - [Examples](#examples)
   - [Applying](#applying)
   - [Discord interactions](#discord-interactions)
-- [Testing and troubleshooting](#testing-and-troubleshooting)
-  - [CloudWatch and X-Ray](#cloudwatch-and-x-ray)
-  - [Useful commands](#useful-commands)
-- [To-do](#to-do)
+    - [Registering interaction endpoint](#registering-interaction-endpoint)
+    - [Creating the guild commands](#creating-the-guild-commands)
+  - [Automatic backups](#automatic-backups)
+- [Recommendations and notes](#recommendations-and-notes)
+
+  - [Game-specific notes](#game-specific-notes)
+    - Minecraft
+      - [Recommended RAM](#recommended-ram)
+      - [Recommended Minecraft server plugins](#recommended-Minecraft-server-plugins)
+  - [Regions](#regions)
+    - [Creating server on another region](#creating-server-on-another-region)
+  - [Server ports](#server-ports)
+  - [DDNS](#ddns)
+  - [Server instance type](#server-instance-type)
+  - [Backups and deletion](#backups-and-deletion)
+    - [Renaming and deleting](#renaming-and-deleting)
+    - [Restoring a backup](#restoring-a-backup)
+  - [Custom game](#custom-game)
+
+- [Troubleshooting](#troubleshooting)
+  - [Useful info and commands](#useful-info-and-commands)
+  - [SSH](#ssh)
+  - [CloudWatch](#cloudwatch)
 - [Notes and acknowledgements](#notes-and-acknowledgements)
 
 ## Supported games
 
-**First class support:**
+**Supported**
 
 - Minecraft (via [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server))
 
 **Others:**
 
-You can run any game server using the `custom` game option as long it meets the following criteria:
-
-- It can run on Linux (any cpu architecture)
-- It doesn't need to stay online 24/7 (when all players leave the server, there's no need for the server to stay open)
-- It can be or it is containerized using Docker (for example, using [steamcmd](https://hub.docker.com/r/steamcmd/steamcmd) image as base)
-- The main port, the one players stay connected to, uses TCP (for auto-shutdown to work properly)
-
-Please see [Setup > Terraform variables > Custom game]() for examples.
+You can run other game servers Docker containers using the `custom` server module option. See [Custom game](#custom-game).
 
 ## Strategy
 
@@ -225,7 +238,7 @@ npm run build --workspaces
 
 After setting up the required variables, you still need to customize the `main.tf` file.
 
-### Customize AWS regions and servers
+### Specify AWS regions and servers via Terraform
 
 After filling
 
@@ -248,15 +261,15 @@ You'll need to set these for each server you want to create.
 
 Some other variables are required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 
-Other variables are also required but are the same between servers or/and regions. Check the [`main.tf`](main.tf) file and the [Examples](#examples).
+Other variables are also required but are the same between servers or/and regions. Check the [`servers.tf`](servers.tf) file and the [Examples](#examples).
 
 #### Examples
 
-For a full example, check the [`main.tf`](main.tf) file itself.
+For a full example, check the [`servers.tf`](servers.tf) and [`regions.tf`](regions.tf) files themselves.
 
 <details>
 
-  <summary>Simple minecraft server</summary>
+  <summary>Simple Minecraft server</summary>
 
 ```tf
 module "example_server" {
@@ -458,6 +471,8 @@ Daily snapshots of the data volume are taken via Data Lifecycle Manager. However
 
 14. If applicable, enable the STS regional endpoint for the regions you're using via the [IAM Console](https://us-east-1.console.aws.amazon.com/iam/home?#/account_settings). See [Activating and deactivating AWS STS in an AWS Region](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
 
+See also [Restoring a backup](#restoring-a-backup)
+
 ## Recommendations and notes
 
 ### Game-specific notes
@@ -492,9 +507,7 @@ Finally, save around 600MiB-1GiB for the JVM / Off-heap memory. Examples:
 - [TabTPS](https://modrinth.com/plugin/tabtps) - Or any other plugin for easy in-game information display of server load, etc
 
 > [!TIP]
-> For Minecraft servers, once you run the docker compose once, you can
-> comment the `PLUGINS` option from the docker compose file inside the instance, to avoid errors
-> if the plugin every fails to download or check for updates. (Until of course, you want to add/remove a plugin)
+> For Minecraft servers, once you run the docker compose once, you can comment the `PLUGINS` option from the docker compose file inside the instance, to avoid errors if the plugin every fails to download or check for updates. (Until of course, you want to add/remove a plugin)
 
 </details>
 
@@ -509,7 +522,7 @@ This project supports multiple AWS regions, so you can have a server in `us-east
 
 - Check if the instance type for your server supported
   - Some instance types are not available in every region. (e.g `r8g` family)
-  - You should check the default instance type by viewing the `local.game_defaults` in [server/ec2.tf](server/ec2.tf)
+  - You should check the default instance type by viewing the `local.game_defaults` in [server/main.tf](server/main.tf)
   - If needed, override `instance_type` server module variable to override the default values.
 
 #### Creating server on another region
@@ -590,14 +603,27 @@ You can also do the same to delete `base_region` module resources. (e.g `terrafo
 
 After deleting a server, Terraform will create a "final snapshot" of the server data volume, which you can use to restore the server.
 
-#### Restoring an backup
+#### Restoring a backup
 
 Backups is done via EBS volume snapshots. You can restore the game server data by
 specifying the `snapshot_id` of the desired snapshot in the server module, which will force a replacement of the EBS "data" volume, where the new one will use that snapshot as a base.
 
+### Custom game
+
+You can manually configure the Compose file, ports, storage and other resources for a desired game server,
+by using the `custom` value in the `game` variable.
+
+The game server must meet the following criteria:
+
+- It can run on Linux
+- It is containerized using Docker (for example, using [steamcmd](https://hub.docker.com/r/steamcmd/steamcmd) image as base)
+- It can handle rare sudden shutdowns (due to the nature of Spot instances)
+  - This means it is able to shut down gracefully or/and auto-save if needed, also if requested via Discord slash command.
+- The "main port" of the game server, the one players stay connected to, uses TCP (for auto-shutdown to work properly)
+
 ## Troubleshooting
 
-#### Useful info and commands
+### Useful info and commands
 
 Game data EBS volume is mounted at `/srv/<game id>` (e.g `/srv/minecraft`);
 
@@ -612,12 +638,12 @@ Commands (using Minecraft server as an example):
 - `sudo systemctl stop auto_shutdown.timer`: Stops the systemd timer which prevents the instance from being shut down automatically until next reboot. Don't forget to shutdown/reboot manually or start the timer again!
 - `sudo conntrack -L --dst-nat | grep -w <game main port> | grep -w ESTABLISHED`: Lists currently estabilished network connections with the container
 
-#### SSH
+### SSH
 
 Your SSH client may give you a warning when connecting due to the IP changing between server restarts.
 You can delete the `~/.ssh/known_hosts` file as a quick workaround.
 
-#### CloudWatch
+### CloudWatch
 
 CloudWatch log groups are created for the Lambda and VPC flow logs.
 They can help you troubleshoot problems with connectivity and Discord interactions.
@@ -631,7 +657,6 @@ I may or may not do these in the future:
 
 - Make it generic so other games are supported - similar to [Lemmons/minecraft-spot](https://github.com/Lemmons/minecraft-spot)
   - Create some generic solution for auto-stop, watching active connections etc.
-- toggle auto backups
 
 ## Notes and acknowledgements
 

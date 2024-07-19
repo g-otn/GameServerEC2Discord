@@ -12,9 +12,9 @@ bootcmd:
   - echo "$(date --rfc-3339=ns) | Device found"
   - echo "$(lsblk)"
 
-# %{~ if instance_timezone != null ~}
+# %{ if instance_timezone != null }
 timezone: ${instance_timezone}
-# %{~ endif ~}
+# %{ endif }
 
 device_aliases: { "data": "${device_name}" }
 disk_setup:
@@ -45,7 +45,7 @@ write_files:
     encoding: base64
     content: ${compose_file_content_b64}
 
-# %{~ if auto_shutdown ~}
+# %{ if auto_shutdown }
   # Auto shutdown files
   - path: /home/ec2-user/auto_shutdown.sh
     defer: true
@@ -61,9 +61,9 @@ write_files:
     defer: true
     encoding: base64
     content: ${auto_shutdown_timer_file_content_b64}
-# %{~ endif ~}
+# %{ endif }
 
-# %{~ if ddns_service == "duckdns" ~}
+# %{ if ddns_service == "duckdns" }
   # Duck DNS files
   - path: /home/ec2-user/duck.sh
     permissions: "0744"
@@ -75,7 +75,7 @@ write_files:
     defer: true
     encoding: base64
     content: ${duckdns_service_file_content_b64}
-# %{~ endif ~}
+# %{ endif }
 
 runcmd:
   # - lsblk
@@ -101,16 +101,16 @@ runcmd:
   - systemctl enable docker
   - systemctl start docker
 
-# %{~ if ddns_service == "duckdns" ~}
+# %{ if ddns_service == "duckdns" }
   # Finish Duck DNS setup
   - systemctl enable duck.service
   - systemctl start duck.service
-# %{~ endif ~}
+# %{ endif }
 
   # Start for the first time
   - systemctl enable compose_start
   - systemctl start compose_start
-# %{~ if auto_shutdown ~}
+# %{ if auto_shutdown }
   - systemctl enable auto_shutdown.timer
   - systemctl start auto_shutdown.timer
-# %{~ endif ~}
+# %{ endif }

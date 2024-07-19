@@ -278,17 +278,72 @@ module "example_server" {
 
   <summary>Minecraft server with plugins, etc</summary>
 
+See https://docker-minecraft-server.readthedocs.io/en/latest/variables/
+
 ```tf
-module "example_server" {
+module "example_plugins" {
   source = "./server"
 
   # Change these to desired values
-  id       = "ExampleVanilla"
+  id       = "ExamplePlugins"
   game     = "minecraft"
-  az       = module.region_us_east_2.available_azs[0]
-  hostname = "example.duckdns.org"
+  hostname = "exampleplugins.duckdns.org"
 
-  # ...
+  instance_timezone = "America/Bahia"
+
+  main_port          = 34850
+  compose_game_ports = ["34850:25565", "24454:24454/udp"]
+  sg_ingress_rules = {
+    "Simple Voice Chat" : {
+      description = "Simple Voice Chat mod server"
+      from_port   = 24454
+      to_port     = 24454
+      ip_protocol = "udp"
+      cidr_ipv4   = "0.0.0.0/0"
+    }
+  }
+  compose_game_environment = {
+    "INIT_MEMORY" = "6100M"
+    "MAX_MEMORY"  = "6100M"
+
+    "ICON" = "https://picsum.photos/300/300"
+    "MOTD" = "     \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r \u00A75\u00A7lGame Server EC2 Discord\u00A7r \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r"
+
+    "VERSION"     = "1.20.4"
+    "ONLINE_MODE" = false
+    "PLUGINS"     = <<EOT
+https://cdn.modrinth.com/data/9eGKb6K1/versions/9yRemfrE/voicechat-bukkit-2.5.16.jar
+
+https://cdn.modrinth.com/data/UmLGoGij/versions/mr2CijyC/DiscordSRV-Build-1.27.0.jar
+
+https://cdn.modrinth.com/data/cUhi3iB2/versions/sOk0epGX/tabtps-spigot-1.3.24.jar
+
+https://cdn.modrinth.com/data/MubyTbnA/versions/vbGiEu4k/FreedomChat-Paper-1.6.0.jar
+https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.0.13/SkinsRestorer.jar
+
+https://download.luckperms.net/1544/bukkit/loader/LuckPerms-Bukkit-5.4.131.jar
+
+https://github.com/dmulloy2/ProtocolLib/releases/download/5.2.0/ProtocolLib.jar
+https://ci.codemc.io/job/AuthMe/job/AuthMeReloaded/2631/artifact/target/authme-5.7.0-SNAPSHOT.jar
+https://ci.codemc.io/job/Games647/job/FastLogin/1319/artifact/bukkit/target/FastLoginBukkit.jar
+EOT
+  }
+
+  compose_game_limits = {
+    memory = "7200mb"
+  }
+
+  # DDNS
+  duckdns_token = var.duckdns_token
+
+  # Region (change these to desired region)
+  base_region = module.region_us-east-2.base_region
+  providers   = { aws = aws.us-east-2 }
+  az          = "us-east-2a"
+
+  # ------------ Common values (just copy and paste) -------------
+  iam_role_dlm_lifecycle_arn = module.global.iam_role_dlm_lifecycle_arn
+  # --------------------------------------------------------------
 }
 ```
 
@@ -296,7 +351,7 @@ module "example_server" {
 
 <details>
 
-  <summary>Minecraft server on another region</summary>
+  <summary>Server on another region</summary>
 
 </details>
 
@@ -405,6 +460,8 @@ Daily snapshots of the data volume are taken via Data Lifecycle Manager. However
 
 ## Recommendations and notes
 
+### Game-specific notes
+
 Please read if applicable!
 
 <details>
@@ -443,19 +500,27 @@ Finally, save around 600MiB-1GiB for the JVM / Off-heap memory. Examples:
 
 ### Regions
 
-Sometimes you want to change the AWS region you server is located at, due to ping and/or price. By default this project
+Sometimes you want to change the AWS region you server is located at, due to latency and/or price. By default this project
 configures `us-east-2` (Ohio) which is generally cheap.
 
 This project supports multiple AWS regions, so you can have a server in `us-east-2` (Ohio) and another two in `eu-north-1` (Frankfurt), for example.
 
-**Before creating servers in another region**
+#### Before creating servers in another region
 
 - Check if the instance type for your server supported
   - Some instance types are not available in every region. (e.g `r8g` family)
   - You should check the default instance type by viewing the `local.game_defaults` in [server/ec2.tf](server/ec2.tf)
-  - You should check the `instance_type` server module variable to override the default values.
+  - If needed, override `instance_type` server module variable to override the default values.
 
-To configure a new region to place y
+#### Creating server on another region
+
+1. In the [`regions.tf`](regions.tf) file, copy and paste the example provider + module blocks below them.
+
+   - If you haven't run `terraform apply` yet, you can also just change the values from the existing one
+
+2. Replace `us-east-2` with the desired region in every occurance in the pasted code.
+   This includes `alias` and `region`(s) attributes, `provider.aws` reference and `base_region` module name.
+3. Also change the `az` attribute to a valid AZ in the chosen region.
 
 ### Server ports
 
@@ -512,6 +577,23 @@ To help choose a instance type different from the defaults, check out:
 - [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html)
 
 If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
+
+### Backups and deletion
+
+#### Renaming and deleting
+
+When you want to delete a server, you can't just comment out the server module usage due to how Terraform providers works.
+
+You can delete by using `terraform destroy --target=module.<server module name>`.
+
+You can also do the same to delete `base_region` module resources. (e.g `terraform destroy --target=module.us-east-2`)
+
+After deleting a server, Terraform will create a "final snapshot" of the server data volume, which you can use to restore the server.
+
+#### Restoring an backup
+
+Backups is done via EBS volume snapshots. You can restore the game server data by
+specifying the `snapshot_id` of the desired snapshot in the server module, which will force a replacement of the EBS "data" volume, where the new one will use that snapshot as a base.
 
 ## Troubleshooting
 

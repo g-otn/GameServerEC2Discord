@@ -19,7 +19,7 @@ locals {
   duckdns_service_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(file("./server/ddns/duckdns/duck.service")) : null
 
   ec2_user_data = templatefile("./server/cloud-init.yml", {
-    timezone = var.instance_timezone
+    instance_timezone = var.instance_timezone
 
     server_data_path = local.server_data_path
     device_name      = local.device_name

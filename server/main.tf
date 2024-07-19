@@ -18,11 +18,11 @@ locals {
   game_defaults_map = {
     minecraft = {
       game_name                 = "Minecraft"
-      instance_type             = "r8g.medium"
-      arch                      = "arm64"
-      data_volume_size          = 10
+      instance_type             = coalesce(var.instance_type, "r8g.medium")
+      arch                      = coalesce(var.arch, "arm64")
+      data_volume_size          = coalesce(var.data_volume_size, 10)
       compose_main_service_name = "mc"
-      main_port                 = 25565
+      main_port                 = coalesce(var.main_port, 25565)
     }
     custom = {
       game_name                 = var.custom_game_name

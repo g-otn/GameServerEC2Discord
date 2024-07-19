@@ -12,8 +12,8 @@ bootcmd:
   - echo "$(date --rfc-3339=ns) | Device found"
   - echo "$(lsblk)"
 
-# %{~ if can(coalesce(timezone)) ~}
-timezone: ${timezone}
+# %{~ if instance_timezone != null ~}
+timezone: ${instance_timezone}
 # %{~ endif ~}
 
 device_aliases: { "data": "${device_name}" }

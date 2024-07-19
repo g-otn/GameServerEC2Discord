@@ -5,8 +5,8 @@
 running=$(docker compose -f ${server_data_path}/docker-compose.yml ps -q ${compose_main_service_name})
 
 if [ -z "$running" ]; then
-  echo "Not running, shutting down"
-  sudo shutdown -h now
+  echo "Compose service not running, shutting down"
+  sudo shutdown -h now "GameServerEC2Discord auto shutdown"
 else
-  echo "Running $running"
+  echo "Compose service still running: $running"
 fi

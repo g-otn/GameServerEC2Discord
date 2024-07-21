@@ -4,19 +4,22 @@ Terraform files to manage cheap EC2 Spot instances to host game servers controll
 
 Made for and tested with personal and small servers with few players.
 
+https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
+
 ## Table of Contents
 
-- [Supported games](#supported-games)
+- [**Supported games**](#supported-games)
 - [Strategy](#strategy)
-  - [Workflow](#workflow)
-  - [Diagram](#diagram)
+  - [**Workflow**](#workflow)
+  - [**Diagram**](#diagram)
 - [Cost breakdown](#cost-breakdown)
-  - [Things to keep in mind](#things-to-keep-in-mind)
+  - [**TL;DR**](#tldr)
   - [Notable expenses](#notable-expenses)
+  - [Things to keep in mind](#things-to-keep-in-mind)
   - [12-month Free Tier](#12-month-free-tier)
   - [Always Free offers](#always-free-offers)
-- [Prerequisites](#prerequisites)
-- [Setup](#Setup)
+- [**Prerequisites**](#prerequisites)
+- [**Setup**](#setup)
   - [(Recommended) Creating an AWS billing alarm](#recommended-creating-an-aws-billing-alarm)
   - [Project setup](#project-setup)
   - [Terraform variables](#terraform-variables)
@@ -30,11 +33,7 @@ Made for and tested with personal and small servers with few players.
     - [Creating the guild commands](#creating-the-guild-commands)
   - [Automatic backups](#automatic-backups)
 - [Recommendations and notes](#recommendations-and-notes)
-
-  - [Game-specific notes](#game-specific-notes)
-    - Minecraft
-      - [Recommended RAM](#recommended-ram)
-      - [Recommended Minecraft server plugins](#recommended-Minecraft-server-plugins)
+  - [**Game-specific notes**](#game-specific-notes)
   - [Regions](#regions)
     - [Creating server on another region](#creating-server-on-another-region)
   - [Server ports](#server-ports)
@@ -44,7 +43,6 @@ Made for and tested with personal and small servers with few players.
     - [Renaming and deleting](#renaming-and-deleting)
     - [Restoring a backup](#restoring-a-backup)
   - [Custom game](#custom-game)
-
 - [Troubleshooting](#troubleshooting)
   - [Useful info and commands](#useful-info-and-commands)
   - [SSH](#ssh)
@@ -109,11 +107,21 @@ Minecraft:
 
 ### TL;DR
 
-- Minecraft: **Less than 1 USD for 30h of gameplay per month** for 1 vCPU with 2.7GHz and 8GB RAM
+- Minecraft: **Less than 0.8 USD for 30h of gameplay per month** for 1 vCPU with 2.7GHz and 8GB RAM ([AWS Princing Calculator estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
 
-**[AWS Princing Calculator estimate](https://calculator.aws/#/estimate?id=f3e231e532d196d04bf96b199fcfe1621cc3bb91)**
+AWS Pricing Calculator estimates do not include Public IP cost, see tables below.
 
-- Does not include Public IP cost, see tables below
+### Notable expenses
+
+| Service   | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/month |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| EC2       | [`r8g.medium`](https://instances.vantage.sh/aws/ec2/r8g.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=r8g.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.017\*   | $0.51           |
+| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15           |
+| EBS       | 10GB volume for server data                                                                                                                                                                                   | ~$0.001    | ~$0.03          |
+| EBS       | Daily snapshots of 10GB volumes                                                                                                                                                                               | -          | ~$0.03          |
+| **Total** |                                                                                                                                                                                                               | **$0.023** | **$0.72**       |
+
+\* I'm currently using [`r7g.medium`](https://instances.vantage.sh/aws/ec2/r7g.medium?min_memory=4&min_vcpus=1) prices (more expensive) since `r8g` family is very new and although it's price is way cheaper now it will probably rise.
 
 ### Things to keep in mind
 
@@ -121,10 +129,9 @@ Minecraft:
 - Region assumed is `us-east-2` (Ohio)
 - Prices are in USD
 - Assumes usage of [Always Free](https://aws.amazon.com/free/?nc2=h_ql_pr_ft&all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers (different from 12 month Free Tier)
-  - This is important mostly due to the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. (See also [blog post](https://aws.amazon.com/pt/blogs/aws/aws-free-tier-data-transfer-expansion-100-gb-from-regions-and-1-tb-from-amazon-cloudfront-per-month/)) Otherwise due to the current price rates and regular gameplay network usage, it would cost more than the instance itself
-- For the EC2 prices (in the table below), keep in mind about:
-  - Spot prices change:
-    - Depending on the chosen instance type
+  - This is important mostly due to the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. See [Always Free offers](#always-free-offers)
+- For the EC2 prices, keep in mind about:
+  - For each instance type, Spot prices change:
     - With time
     - Per region
     - Per availability zone.
@@ -132,18 +139,7 @@ Minecraft:
   - You can always change the instance type, but don't forget to change the other related Terraform variables!
   - Surplus vCPU usage credits charges when using [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html) (`t4g`, `t3a`, `t3` and `t2`) in unlimited mode (default). See [Earn CPU credits](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html#earning-CPU-credits) and [When to use unlimited mode versus fixed CPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#when-to-use-unlimited-mode).
     - Basically, don't play at heavy CPU usage continuously for TOO long when using those instances types, or else you'll pay an extra fixed rate.
-
-### Notable expenses
-
-| Service   | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/month |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
-| EC2       | [`r8g.medium`](https://instances.vantage.sh/aws/ec2/r8g.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=r8g.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | ~$0.018\*  | $0.54           |
-| EBS       | 10GB volume for server data                                                                                                                                                                                   | $0.00109   | $0.032          |
-| EBS       | Daily snapshots of 10GB volumes                                                                                                                                                                               | -          | ~$0.03          |
-| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.015          |
-| **Total** |                                                                                                                                                                                                               | **$0.029** | **$0.578**      |
-
-\* I'm currently using `r7g.medium` prices (more expensive) since `r8g` family is very new and although it's price is very cheap now (~$0.006/h) it will probably rise.
+- Of course, if you use your AWS account for other things you need to account for them too, specially for [Always Free offers](#always-free-offers).
 
 ### 12-month Free Tier
 
@@ -162,13 +158,15 @@ If you have access to the 12-month Free tier, you should automatically benefit f
 Some of the services used are more than covered by the ["always free"](https://aws.amazon.com/free/?all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers,
 namely:
 
-Lambda; SNS; KMS; CloudWatch / X-Ray; Network data transfer from EC2 to internet.
+Lambda; SNS; KMS; CloudWatch / X-Ray; Data transfer from EC2 to internet; Data transfer between regions (i.e from Lambda and SNS to game server in another region)
 
-Again, as of July 2024, the most "would-be relatively expensive" expense is the **Network data transfer from EC2 to the internet**, currently covered by the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. (See also [blog post](https://aws.amazon.com/pt/blogs/aws/aws-free-tier-data-transfer-expansion-100-gb-from-regions-and-1-tb-from-amazon-cloudfront-per-month/)). **You have to keep this in mind** if you're creating more than a couple of servers, or download something big from a server while it's running for example.
-
-If necessary, it's possible to pay attention to your network stats to see more or less how much data the server is sending to a single player, per second. And then calculate how much will be used per month.
-
-Of course, if you use your AWS account for other things you need to account for them.
+> [!NOTE]
+> Again, as of July 2024, the most "would-be relatively expensive" expense is the **Network data transfer from EC2 to the internet**, currently covered by the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. (See also [blog post](https://aws.amazon.com/pt/blogs/aws/aws-free-tier-data-transfer-expansion-100-gb-from-regions-and-1-tb-from-amazon-cloudfront-per-month/)).
+>
+> Otherwise due to the current price rates and regular gameplay network usage, it would cost more than the instance itself in some cases.
+>
+> **You have to keep this in mind** if you're creating more than a couple of servers, or download something big from a server while it's running for example.
+> If necessary, you could pay attention to individual player network download metrics (e.g 20kb/s), and then calculate how much will be used per 30h of gameplay.
 
 ## Prerequisites
 
@@ -240,28 +238,29 @@ After setting up the required variables, you still need to customize the `main.t
 
 ### Specify AWS regions and servers via Terraform
 
-After filling
+After setting up the project and filling in the root Terraform variables,
+you must customize your desired AWS regions and servers by modifying the [`servers.tf`](servers.tf) and [`regions.tf`](regions.tf) files.
 
-#### About available modules
+These files are responsible for creating the game servers, and the resources in a specific AWS region required for the server to run.
 
-- `base_global`: Common resources used across regions. Only one of these should exist
-- `base_region`: Region-specific resources used by game servers located in that region. It uses outputs from `base_global`. One required for each region where a server is going to be placed in
-- `server`: Each usage of this module creates and manages the resources of a single game server. References resources from a specific region
+By default, us-east-2 is already configured in [`regions.tf`](regions.tf). If you don't want to change your region you can leave that file as is. See also [Creating server on another region](#creating-server-on-another-region).
+
+But you must modify the [`servers.tf`](servers.tf) file to create your server. Go to that file and either modify or comment out the example server. Notice that it references specific values and providers of an AWS region.
 
 #### Required variables for each server module
 
 You'll need to set these for each server you want to create.
 
-| Name       | Description                                                                    |
-| ---------- | ------------------------------------------------------------------------------ |
-| `id`       | Unique alphanumeric id for the server                                          |
-| `game`     | The game this server is going to host. Valid values: `minecraft`, `custom`     |
-| `az`       | Which availability zone from the chosen region to place the server in.         |
-| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required if using DDNS |
+| Name       | Description                                                                            |
+| ---------- | -------------------------------------------------------------------------------------- |
+| `id`       | Unique alphanumeric id for the server                                                  |
+| `game`     | The game this server is going to host. Valid values: `minecraft`, `custom`             |
+| `az`       | Which availability zone from the chosen region to place the server in.                 |
+| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required unless DDNS is `none` |
 
-Some other variables are required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
+Some other variables may be required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 
-Other variables are also required but are the same between servers or/and regions. Check the [`servers.tf`](servers.tf) file and the [Examples](#examples).
+Other "Common values" are also required but are the same between servers or/and regions. (you can just copy and paste them) See [Examples](#examples).
 
 #### Examples
 
@@ -275,10 +274,9 @@ For a full example, check the [`servers.tf`](servers.tf) and [`regions.tf`](regi
 module "example_server" {
   source = "./server"
 
-  # Change these to desired values
   id       = "ExampleVanilla"
   game     = "minecraft"
-  az       = module.region_us_east_2.available_azs[0]
+  az       = "us-east-2a"
   hostname = "example.duckdns.org"
 
   # ...
@@ -454,11 +452,13 @@ For example, the [`server.example.json`](scripts/servers.example.json) file woul
 
 ![server.example.json result](https://github.com/user-attachments/assets/3ac8e0bf-6cbb-4644-901e-1cc106a61a37)
 
-12. After creating the necessary files, run the `setup-discord-app` npm script. The script should call the Discord API and register the slash command interactions which the Lambda is ready to handle to that specific Discord server:
+12. After creating the necessary files, run the `setup-discord-app` npm script.
 
 ```
 npm run setup-discord-app
 ```
+
+The script should load the `servers.json` file, call the Discord API and register the slash command interactions which the Lambda will be ready to handle:
 
 13. You should now be able to use the `/start`, `/stop`, `/restart`, `/ip` or `/status` commands into one of the text channels to manage the instance.
     - You may need do additional permission/role setup depending on your Discord server configuration (i.e if the app can't use the text channel)
@@ -473,6 +473,18 @@ Daily snapshots of the data volume are taken via Data Lifecycle Manager. However
 
 See also [Restoring a backup](#restoring-a-backup)
 
+### Protecting your server from the internet
+
+Since you're running a public server, techinically **anyone on the internet** can join your server and do anything (grief, cheat, troll, etc).
+This is most likely not desirable and you might want to do game-specific configuration
+to limit the server for you and your friends. (one of the purposes of this project)
+
+These are done by SSH-ing into your instance and then running commands or modifying some game server configuration files. (See also [SSH](#ssh))
+
+15. Please **check the "post-setup" section on each games' [Game-specific notes](#game-specific-notes)** for things you may want to do.
+
+Check also [Useful info and commands](#useful-info-and-commands).
+
 ## Recommendations and notes
 
 ### Game-specific notes
@@ -480,7 +492,19 @@ See also [Restoring a backup](#restoring-a-backup)
 Please read if applicable!
 
 <details>
-  <summary>Minecraft (RAM, plugins)</summary>
+  <summary>Minecraft</summary>
+
+### Minecraft post-setup
+
+You should set up a whitelist so only your friends can join the server.
+
+You can do that by op-ing yourself by creating an whitelist on the Minecraft server console.
+
+1. Connect to your running server instance using SSH (See [SSH](#ssh))
+2. Attach your terminal to the Minecraft server terminal by running `docker attach minecraft-mc-1`
+3. Run `whitelist <player name>` to whitelist someone. You could also give yourself admin using `op <your player name>` to run more commands from within your game chat.
+
+If you're running an offline server, you could also consider setup an auth plugin such as [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/) (Spigot).
 
 ### Recommended RAM
 
@@ -569,15 +593,15 @@ You also have to set the `hostname` variable with the hostname which will be use
 
 Choosing the instance type is has significant impact on the performance of the game server and its cost.
 
-Each supported game comes with a default instance type, but it can be changed. Don't forget to update the relevant memory and docker variables to match the chosen instance type.
+Each supported game comes with a default instance type, but it can be changed. Don't forget to update the relevant Docker Compose variables (environment in case of Minecraft and deploy limits) to match the chosen instance type.
 
 What to consider mainly, when choosing:
 
 - CPU architecture (e.g `arm64` are generally cheaper but some games don't support it)
 - Available vCPU and RAM
 - CPU frequency (GHz)
-- Spot price
-- Spot interruption frequency (if it's too high there's more chance of the server going down while you're playing)
+- Spot price and price history
+- Spot interruption frequency (if it's too high there's more chance per month of the server going down while you're playing)
 
 For Minecraft, I'd recommend nothing less than 1 vCPU and 4GB RAM.
 
@@ -621,9 +645,46 @@ The game server must meet the following criteria:
   - This means it is able to shut down gracefully or/and auto-save if needed, also if requested via Discord slash command.
 - The "main port" of the game server, the one players stay connected to, uses TCP (for auto-shutdown to work properly)
 
+To define a custom game server:
+
+1. Copy and paste a new server module usage in the [`servers.tf`](servers.tf) file.
+2. Set common server-specific values such as `id`, `az`, `hostname` and other DDNS config.
+3. Set `game` to `custom` and define an alphanumeric `custom_game_name` (e.g `CustomGame`).
+4. Set the game's networking using `main_port` and add `sg_ingress_rules` as needed.
+5. Set the game's available storage using `data_volume_size` and backup frequency and retation using the `data_volume_snapshot_*` variables.
+   - If your volume is too big and/or the game data changes too much between snapshots (e.g big save files are compressed each time), consider lowering snapshot retention. Check AWS pricing calculator.
+6. Configure the Docker Compose file which will be used within the instance by setting up the `compose_*` variables.
+   - Networking: Define the container `ports` to match `main_port` and `sg_ingress_rules`.
+   - Storage: Define a volume matching `server_data_path`, which is based from lowercase value of `custom_game_name`
+     (e.g `/srv/customgame`, See [server/main.tf](server/main.tf)).
+   - Environment: Fill in environment variables required by your image.
+7. Set the `instance_type` and matching `arch`. See [Server instance type](#server-instance-type).
+8. To test the instance for the first time, disable `auto_shutdown`. Don't forget to re-enable it!
+9. Run `terraform init` since this is a new module
+10. Follow [Applying](#applying) and [Discord interactions](#discord-interactions) again to create the resources and update your Discord app slash commands.
+
 ## Troubleshooting
 
+### SSH
+
+I recommend using some UI application to help navigate and manage files via SSH like [VS Code Remote Explorer](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-explorer).
+
+SSH into your instance using the `ec2-user` user. Example:
+
+```bash
+ssh -i "~/.ssh/<my private key>.pem" "ec2-user@<myserver>.duckdns.org"
+```
+
+- Replace `<my private key>` with the name of your private key, assuming it's saved at `~/.ssh`
+- replace `<myserver>.duckdns.org` with the `hostname` you put in the Terraform `servers.tf` config for that server
+
+> [!NOTE]
+> Your SSH client may give you a warning or fail when connecting due to the IP changing between server restarts.
+> You can delete the `~/.ssh/known_hosts` file as a quick workaround.
+
 ### Useful info and commands
+
+These notes and commands are for when you are connected to the instance via SSH.
 
 Game data EBS volume is mounted at `/srv/<game id>` (e.g `/srv/minecraft`);
 
@@ -637,11 +698,6 @@ Commands (using Minecraft server as an example):
 - `docker logs minecraft-mc-1 -f`: Latest logs from the container
 - `sudo systemctl stop auto_shutdown.timer`: Stops the systemd timer which prevents the instance from being shut down automatically until next reboot. Don't forget to shutdown/reboot manually or start the timer again!
 - `sudo conntrack -L --dst-nat | grep -w <game main port> | grep -w ESTABLISHED`: Lists currently estabilished network connections with the container
-
-### SSH
-
-Your SSH client may give you a warning when connecting due to the IP changing between server restarts.
-You can delete the `~/.ssh/known_hosts` file as a quick workaround.
 
 ### CloudWatch
 

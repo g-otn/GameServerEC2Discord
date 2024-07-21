@@ -191,6 +191,10 @@ variable "duckdns_token" {
   type        = string
   sensitive   = true
   default     = null
+  validation {
+    condition     = var.ddns_service == "duckdns" ? var.duckdns_token != null : true
+    error_message = "Duck DNS token must be set if using Duck DNS"
+  }
 }
 
 variable "noip_ddns_key_username" {

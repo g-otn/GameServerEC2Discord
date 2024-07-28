@@ -12,6 +12,13 @@ locals {
     compose_main_service_name = local.game.compose_main_service_name
   }))
 
+  watch_conn_service_file_content_b64 = base64encode(file("./server/systemd/watch_conn/watch_conn.service"))
+  watch_conn_script_file_content_b64 = base64encode(templatefile("./server/systemd/watch_conn/watch_conn.sh", {
+    main_port                 = local.game.main_port
+    server_data_path          = local.server_data_path
+    compose_main_service_name = local.game.compose_main_service_name
+  }))
+
   duckdns_script_file_content_b64 = var.ddns_service == "duckdns" ? base64encode(templatefile("./server/ddns/duckdns/duck.sh", {
     duckdns_domain = local.duckdns_domain
     duckdns_token  = var.duckdns_token
@@ -20,6 +27,8 @@ locals {
 
   ec2_user_data = templatefile("./server/cloud-init.yml", {
     instance_timezone = var.instance_timezone
+
+    arch = local.game.arch
 
     server_data_path = local.server_data_path
     device_name      = local.device_name
@@ -33,6 +42,10 @@ locals {
     auto_shutdown_script_file_content_b64  = local.auto_shutdown_script_file_content_b64
     auto_shutdown_service_file_content_b64 = local.auto_shutdown_service_file_content_b64
     auto_shutdown_timer_file_content_b64   = local.auto_shutdown_timer_file_content_b64
+
+    watch_connections                   = local.game.watch_connections
+    watch_conn_script_file_content_b64  = local.watch_conn_script_file_content_b64
+    watch_conn_service_file_content_b64 = local.watch_conn_service_file_content_b64
 
     duckdns_script_file_content_b64  = local.duckdns_script_file_content_b64
     duckdns_service_file_content_b64 = local.duckdns_service_file_content_b64

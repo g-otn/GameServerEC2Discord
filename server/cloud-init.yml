@@ -63,6 +63,20 @@ write_files:
     content: ${auto_shutdown_timer_file_content_b64}
 # %{ endif }
 
+# %{ if watch_connections }
+  # Connection watcher
+  - path: /home/ec2-user/watch_conn.sh
+    defer: true
+    owner: ec2-user
+    permissions: "0744"
+    encoding: base64
+    content: ${watch_conn_script_file_content_b64}
+  - path: /etc/systemd/system/watch_conn.service
+    defer: true
+    encoding: base64
+    content: ${watch_conn_service_file_content_b64}
+# %{ endif }
+
 # %{ if ddns_service == "duckdns" }
   # Duck DNS files
   - path: /home/ec2-user/duck.sh
@@ -90,11 +104,14 @@ runcmd:
   - [
       curl,
       -SL,
-      "https://github.com/docker/compose/releases/download/v2.27.3/docker-compose-linux-aarch64",
+      'https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-%{ if arch == "x86_64" }x86_64%{ else }aarch64%{ endif }',
       -o,
       /usr/local/lib/docker/cli-plugins/docker-compose,
     ]
   - chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+  # Manually install fastfetch
+  - rpm -i 'https://github.com/fastfetch-cli/fastfetch/releases/download/2.20.0/fastfetch-linux-%{ if arch == "x86_64" }amd64%{ else }aarch64%{ endif }.rpm'
 
   # Finish Docker setup
   - usermod -a -G docker ec2-user # Allow docker commands without sudo
@@ -110,6 +127,12 @@ runcmd:
   # Start for the first time
   - systemctl enable compose_start
   - systemctl start compose_start
+
+# %{ if watch_connections }
+  - systemctl enable watch_conn.service
+  - systemctl start watch_conn.service
+# %{ endif }
+
 # %{ if auto_shutdown }
   - systemctl enable auto_shutdown.timer
   - systemctl start auto_shutdown.timer

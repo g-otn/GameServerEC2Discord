@@ -16,8 +16,8 @@ variable "game" {
   type        = string
 
   validation {
-    condition     = contains(["minecraft", "custom"], var.game)
-    error_message = "Valid values are: minecraft, custom"
+    condition     = contains(["minecraft", "terraria", "custom"], var.game)
+    error_message = "Valid values are: minecraft, terraria, custom"
   }
 }
 
@@ -86,7 +86,7 @@ variable "arch" {
 }
 
 variable "data_volume_size" {
-  description = "The size, in GB of the EBS volume storing the game server data. Make sure it's enough! Automatically set based on game"
+  description = "The size, in GB, of the EBS volume storing the game server data. Make sure it's enough! Automatically set based on game"
   type        = number
   default     = null
   validation {
@@ -116,7 +116,7 @@ variable "sg_ingress_rules" {
 variable "data_volume_snapshot_retain_count" {
   description = "How many snapshots to retain. Snapshots are taken daily, so the number will correspond to the number of days"
   type        = number
-  default     = 5
+  default     = 7
 }
 
 variable "data_volume_snapshot_create_time" {
@@ -148,6 +148,12 @@ variable "compose_game_limits" {
   default     = {}
 }
 
+variable "compose_game_elements" {
+  description = "Attributes for the game's Docker Compose main service. Can be used to set volumes, etc"
+  type        = map(any)
+  default     = {}
+}
+
 variable "compose_services" {
   description = "Extra Docker Compose services to run alongside the game's service. Can also be used to set up unknown games"
   type        = map(any)
@@ -174,6 +180,12 @@ variable "auto_shutdown" {
   description = "Create files to manage auto shutdown. If disabled the instance won't shut down automatically! Useful to disable for debugging purposes"
   type        = bool
   default     = true
+}
+
+variable "watch_connections" {
+  description = "Create files to watch for connections between the compose main service. If disabled the instance won't shut down automatically for some games! Useful to disable for debugging purposes"
+  type        = bool
+  default     = null
 }
 
 
@@ -228,4 +240,19 @@ variable "base_region" {
 variable "iam_role_dlm_lifecycle_arn" {
   description = "Global; ARN of the IAM role that allows DLM to manage the lifecycle of the data volume snapshots"
   type        = string
+}
+
+# ----------------------------------------------------------------
+# Game-specific variables
+# ----------------------------------------------------------------
+
+variable "terraria_world_size" {
+  description = "The Terraria server world size"
+  type        = number
+  default     = 2
+  validation {
+    condition     = var.terraria_world_size >= 1 && var.terraria_world_size <= 3
+    error_message = "Terraria world size autocreate TShock paramter must be between 1 (small) and 3 (big)"
+  }
+
 }

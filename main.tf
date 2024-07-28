@@ -12,3 +12,9 @@ module "global" {
   discord_app_public_key = var.discord_app_public_key
   discord_bot_token      = var.discord_bot_token
 }
+
+
+locals {
+  // Helpful common strings
+  terraria_workdir_path = "/root/.local/share/Terraria/Worlds"
+}

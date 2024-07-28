@@ -32,6 +32,7 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
     - [Registering interaction endpoint](#registering-interaction-endpoint)
     - [Creating the guild commands](#creating-the-guild-commands)
   - [Automatic backups](#automatic-backups)
+  - [Game specific post-setup](#game-specific-post-setup)
 - [Recommendations and notes](#recommendations-and-notes)
   - [**Game-specific notes**](#game-specific-notes)
   - [Regions](#regions)
@@ -54,10 +55,11 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 **Supported**
 
 - Minecraft (via [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server))
+- Terraria (via [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria))
 
 **Others:**
 
-You can run other game servers Docker containers using the `custom` server module option. See [Custom game](#custom-game).
+You can run other game servers Docker containers using the `custom` server module option. See [Custom game](#custom-game) and custom game [example](#examples).
 
 ## Strategy
 
@@ -264,7 +266,7 @@ Other "Common values" are also required but are the same between servers or/and 
 
 #### Examples
 
-For a full example, check the [`servers.tf`](servers.tf) and [`regions.tf`](regions.tf) files themselves.
+For a full example, check the [`servers.tf`](servers.tf) and [`regions.tf`](regions.tf) files themselves. See [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria/).
 
 <details>
 
@@ -382,6 +384,37 @@ EOT
 
   <summary>Custom game</summary>
 
+Creating a TShock Terraria server using the `custom` game option.
+See [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria/).
+
+```tf
+module "terraria" {
+  source = "./server"
+
+  # Change these to desired values
+  id               = "CustomExample"
+  game             = "custom"
+  custom_game_name = "Terraria"
+  hostname         = "gsed-example.duckdns.org"
+
+  instance_type    = "m7g.medium"
+  arch             = "arm64"
+  data_volume_size = 1
+
+  main_port = 7777
+  compose_services = {
+    main : {
+      image : "ryshe/terraria"
+      ports : ["7777:7777"]
+      command : "-world ${local.terraria_workdir_path}/Worlds/CustomExample.wld -autocreate 3"
+      volumes : ["/srv/terraria:${local.terraria_workdir_path}"]
+    }
+  }
+
+  // ...
+}
+```
+
 </details>
 
 ### Applying
@@ -473,13 +506,15 @@ Daily snapshots of the data volume are taken via Data Lifecycle Manager. However
 
 See also [Restoring a backup](#restoring-a-backup)
 
-### Protecting your server from the internet
+### Game specific post-setup
 
-Since you're running a public server, techinically **anyone on the internet** can join your server and do anything (grief, cheat, troll, etc).
+Since you're running a public server, techinically **anyone on the internet** can join your server and do anything (grief, cheat, crash the server, etc).
 This is most likely not desirable and you might want to do game-specific configuration
-to limit the server for you and your friends. (one of the purposes of this project)
+to limit the server for you and your friends.
 
 These are done by SSH-ing into your instance and then running commands or modifying some game server configuration files. (See also [SSH](#ssh))
+
+You'll also want to do this to load an existing save / world, depending on the game.
 
 15. Please **check the "post-setup" section on each games' [Game-specific notes](#game-specific-notes)** for things you may want to do.
 
@@ -502,7 +537,7 @@ You can do that by op-ing yourself by creating an whitelist on the Minecraft ser
 
 1. Connect to your running server instance using SSH (See [SSH](#ssh))
 2. Attach your terminal to the Minecraft server terminal by running `docker attach minecraft-mc-1`
-3. Run `whitelist <player name>` to whitelist someone. You could also give yourself admin using `op <your player name>` to run more commands from within your game chat.
+3. Run `whitelist add <player name>` to whitelist someone. You could also give yourself admin using `op <your player name>` to run more commands from within your game chat.
 
 If you're running an offline server, you could also consider setup an auth plugin such as [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/) (Spigot).
 
@@ -532,6 +567,22 @@ Finally, save around 600MiB-1GiB for the JVM / Off-heap memory. Examples:
 
 > [!TIP]
 > For Minecraft servers, once you run the docker compose once, you can comment the `PLUGINS` option from the docker compose file inside the instance, to avoid errors if the plugin every fails to download or check for updates. (Until of course, you want to add/remove a plugin)
+
+</details>
+
+<details>
+  <summary>Terraria</summary>
+
+### Terraria post-setup
+
+You should set up a server password so only you and your friends can join the server.
+
+1. Connect to your running server instance using SSH (See [SSH](#ssh))
+2. Edit the file at `/srv/terraria/config.json`
+3. Set a password in the `Settings.ServerPassword` field
+4. Restart the server by running `docker compose restart terraria-terraria-1` or by restarting the whole instance.
+
+See also TShock [Config Settings](https://tshock.readme.io/docs/config-settings) and [Setting Up Your Server](https://tshock.readme.io/docs/setting-up-your-server).
 
 </details>
 
@@ -612,6 +663,7 @@ To help choose a instance type different from the defaults, check out:
   - Grouping "Cost" by "Daily" can facilitate visualize how much (the instance alone) would cost for 24h of gameplay.
 - [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/)
 - [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html)
+- [Geekbench Browser](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2) (CPU single-core and multi-core performance benchmarks)
 
 If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
 
@@ -639,13 +691,19 @@ by using the `custom` value in the `game` variable.
 
 The game server must meet the following criteria:
 
-- It can run on Linux
-- It is containerized using Docker (for example, using [steamcmd](https://hub.docker.com/r/steamcmd/steamcmd) image as base)
-- It can handle rare sudden shutdowns (due to the nature of Spot instances)
-  - This means it is able to shut down gracefully or/and auto-save if needed, also if requested via Discord slash command.
-- The "main port" of the game server, the one players stay connected to, uses TCP (for auto-shutdown to work properly)
+- It can run on Linux 64-bits
+- It is containerized using Docker (for example, based on [CM2.Network steamcmd](https://cm2.network) or [steamcmd/steamcmd](https://hub.docker.com/r/steamcmd/steamcmd))
+  - The container can be run on `x86_64` or `arm64` architectures
+- It can handle rare sudden shutdowns
+  - This is due to the nature of Spot instances or if someone requests it via Discord slash commands
+  - This means it should be able to shut down gracefully and preferrably auto-save periodically
+- It makes sense for this project:
+  - This project allows part of the friend group to play on the server, without
+    requiring the host player who has the save file to be online at all play sessions.
+    Examples are Multiplayer "Open World Survival Craft" / Sandbox games.
+  - Some games though, can only be played or only make sense to play when the all players are together.
 
-To define a custom game server:
+To define a custom game server (see also custom game [example](#examples)):
 
 1. Copy and paste a new server module usage in the [`servers.tf`](servers.tf) file.
 2. Set common server-specific values such as `id`, `az`, `hostname` and other DDNS config.
@@ -653,7 +711,8 @@ To define a custom game server:
 4. Set the game's networking using `main_port` and add `sg_ingress_rules` as needed.
 5. Set the game's available storage using `data_volume_size` and backup frequency and retation using the `data_volume_snapshot_*` variables.
    - If your volume is too big and/or the game data changes too much between snapshots (e.g big save files are compressed each time), consider lowering snapshot retention. Check AWS pricing calculator.
-6. Configure the Docker Compose file which will be used within the instance by setting up the `compose_*` variables.
+6. Configure the Docker Compose file which will be used within the instance by setting up at least the `compose_services` variable.
+   - Create a service with the name `main`
    - Networking: Define the container `ports` to match `main_port` and `sg_ingress_rules`.
    - Storage: Define a volume matching `server_data_path`, which is based from lowercase value of `custom_game_name`
      (e.g `/srv/customgame`, See [server/main.tf](server/main.tf)).
@@ -666,6 +725,8 @@ To define a custom game server:
 ## Troubleshooting
 
 ### SSH
+
+You most likely will want to SSH into your instance at least once to maybe upload an existing save / world or to modify server configuration.
 
 I recommend using some UI application to help navigate and manage files via SSH like [VS Code Remote Explorer](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-explorer).
 

@@ -32,6 +32,6 @@ resource "aws_dlm_lifecycle_policy" "backup_data" {
   }
 
   tags = {
-    Name = "${local.prefix_id_game} Data volume backup Lifecycle Policy"
+    Name = "${local.prefix_sm_id_game} Data volume backup Lifecycle Policy"
   }
 }

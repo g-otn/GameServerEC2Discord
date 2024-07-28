@@ -1,7 +1,7 @@
 locals {
   base_cidr_block     = "10.0.0.0/16"
   public_subnets      = [for i in range(length(var.azs)) : cidrsubnet(local.base_cidr_block, 8, 101 + i)]
-  public_subnet_names = [for i in range(length(var.azs)) : "${local.prefix_sm} Public Subnet ${i + 1}"]
+  public_subnet_names = [for i in range(length(var.azs)) : "${local.prefix_sm} Public Subnet ${i + 1} (${var.azs[i]})"]
 }
 
 module "vpc" {

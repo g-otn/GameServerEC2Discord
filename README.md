@@ -109,11 +109,15 @@ Minecraft:
 
 ### TL;DR
 
-- Minecraft: **Less than 0.8 USD for 30h of gameplay per month** for 1 vCPU with 2.7GHz and 8GB RAM ([AWS Princing Calculator estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
+- Minecraft: **Less than 0.8 USD for 30h of gameplay per month** for 1 vCPU with 2.7GHz and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
+- Terraria: **Less than 0.8 USD for 30h of gameplay per month** for 1 vCPU with 3.7 GHz and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
 
 AWS Pricing Calculator estimates do not include Public IP cost, see tables below.
 
 ### Notable expenses
+
+<details open>
+  <summary><b>Minecraft</b></summary>
 
 | Service   | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/month |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
@@ -125,6 +129,21 @@ AWS Pricing Calculator estimates do not include Public IP cost, see tables below
 
 \* I'm currently using [`r7g.medium`](https://instances.vantage.sh/aws/ec2/r7g.medium?min_memory=4&min_vcpus=1) prices (more expensive) since `r8g` family is very new and although it's price is way cheaper now it will probably rise.
 
+</details>
+
+<details>
+  <summary><b>Terraria</b></summary>
+
+| Service   | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/month |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| EC2       | [`m7a.medium`](https://instances.vantage.sh/aws/ec2/m7a.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.02      | $0.60           |
+| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15           |
+| EBS       | 1GB volume for server data                                                                                                                                                                                    | ~$0.001    | ~$0.01          |
+| EBS       | Daily snapshots of 1GB volumes                                                                                                                                                                                | -          | ~$0.01          |
+| **Total** |                                                                                                                                                                                                               | **$0.026** | **$0.77**       |
+
+</details>
+
 ### Things to keep in mind
 
 - Last updated: July 2024 (please check the AWS Pricing Calculator estimate)
@@ -132,6 +151,7 @@ AWS Pricing Calculator estimates do not include Public IP cost, see tables below
 - Prices are in USD
 - Assumes usage of [Always Free](https://aws.amazon.com/free/?nc2=h_ql_pr_ft&all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers (different from 12 month Free Tier)
   - This is important mostly due to the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. See [Always Free offers](#always-free-offers)
+- **The most important price factors are play time and instance type**
 - For the EC2 prices, keep in mind about:
   - For each instance type, Spot prices change:
     - With time
@@ -508,7 +528,7 @@ See also [Restoring a backup](#restoring-a-backup)
 
 ### Game specific post-setup
 
-Since you're running a public server, techinically **anyone on the internet** can join your server and do anything (grief, cheat, crash the server, etc).
+Since you're running a public server, technically **anyone on the internet** can join your server and do anything (grief, cheat, crash the server, etc).
 This is most likely not desirable and you might want to do game-specific configuration
 to limit the server for you and your friends.
 
@@ -661,9 +681,9 @@ To help choose a instance type different from the defaults, check out:
 - The [Vantage](https://instances.vantage.sh/?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=t4g.large) website
   - Tip: Hide Name, `Windows`-related, Network Performance, On-demand and Reserved columns; Show all `Linux Spot`-related, `Clock Speed` and `Physical Processor` columns; Sort by `Linux Spot Average cost`
   - Grouping "Cost" by "Daily" can facilitate visualize how much (the instance alone) would cost for 24h of gameplay.
-- [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/)
-- [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html)
-- [Geekbench Browser](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2) (CPU single-core and multi-core performance benchmarks)
+- [Geekbench Browser](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2) - Easier to check CPU performance by looking at benchmark scores
+- [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/) - Official way to check spot interruption frequency
+- [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html) - Similar to Vantage
 
 If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
 

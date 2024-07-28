@@ -788,13 +788,6 @@ They can help you troubleshoot problems with connectivity and Discord interactio
 X-Ray tracing is also enabled (mainly for debugging the project), however you need to [manually set up SNS](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sns.html#xray-services-sns-configuration) permissions so the traces show up correctly in the Trace Map / etc.
 _Or else the trace will stop at SNS and a new trace will begin in the Lamba context_
 
-## To-do
-
-I may or may not do these in the future:
-
-- Make it generic so other games are supported - similar to [Lemmons/minecraft-spot](https://github.com/Lemmons/minecraft-spot)
-  - Create some generic solution for auto-stop, watching active connections etc.
-
 ## Notes and acknowledgements
 
 This project was made for studying purposes mainly. The following repos and articles were very helpful in the learning and development process:

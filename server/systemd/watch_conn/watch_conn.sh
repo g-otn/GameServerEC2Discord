@@ -4,9 +4,9 @@
 command="sudo conntrack -L --dst-nat | grep -w ${main_port} | grep -w -c ESTABLISHED"
 
 # Sleep to avoid shutting down right after container start
-interval=10s
+interval=1m
 no_conn_count=0
-max_count=60
+max_count=10
 
 while [[ $no_conn_count -lt $max_count ]]; do
     echo "no_conn_count: $no_conn_count / $max_count"

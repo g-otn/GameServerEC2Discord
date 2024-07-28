@@ -6,8 +6,8 @@ locals {
 
   prefix            = "GameServerEC2Discord"
   prefix_sm         = "GSED"
-  prefix_id_game    = "${local.prefix} ${var.id} ${var.game}"
-  prefix_sm_id_game = "${local.prefix_sm} ${var.id} ${var.game}"
+  prefix_id_game    = "${local.prefix} ${var.id} ${local.game.game_name}"
+  prefix_sm_id_game = "${local.prefix_sm} ${var.id} ${local.game.game_name}"
 
   subnet_id = var.base_region.public_subnets[index(var.base_region.available_azs, var.az)]
 
@@ -23,13 +23,25 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 10)
       compose_main_service_name = "mc"
       main_port                 = coalesce(var.main_port, 25565)
+      watch_connections         = coalesce(var.watch_connections, false)
+    }
+    terraria = {
+      game_name                 = "Terraria"
+      instance_type             = coalesce(var.instance_type, "m7a.medium")
+      arch                      = coalesce(var.arch, "x86_64")
+      data_volume_size          = coalesce(var.data_volume_size, 1)
+      compose_main_service_name = "terraria"
+      main_port                 = coalesce(var.main_port, 7777)
+      watch_connections         = coalesce(var.watch_connections, true)
     }
     custom = {
       game_name                 = var.custom_game_name
       instance_type             = var.instance_type
+      arch                      = var.arch
       data_volume_size          = var.data_volume_size
       compose_main_service_name = "main"
       main_port                 = var.main_port
+      watch_connections         = coalesce(var.watch_connections, true)
     }
   }
   game                     = local.game_defaults_map[var.game]
@@ -76,6 +88,21 @@ locals {
         }
       }
     }, var.compose_top_level_elements)
+
+    terraria = merge({
+      services : {
+        "${local.game_defaults_map.terraria.compose_main_service_name}" : {
+          image : "ryshe/terraria",
+          ports : coalesce(var.compose_game_ports, ["7777:7777"]),
+          environment : merge({}, var.compose_game_environment)
+          command : "-world /root/.local/share/Terraria/Worlds/${var.id}.wld -autocreate ${var.terraria_world_size}"
+          volumes : [
+            "${local.server_data_path}:/root/.local/share/Terraria/Worlds"
+          ]
+        }
+      }
+    }, var.compose_top_level_elements)
+
     custom = merge({
       services : var.compose_services
     }, var.compose_top_level_elements)

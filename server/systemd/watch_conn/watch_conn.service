@@ -1,0 +1,13 @@
+[Unit]
+Description=Shutdowns instance if docker compose stack is not running
+
+After=compose_start.service
+
+[Service]
+Type=oneshot
+User=ec2-user
+Group=ec2-user
+ExecStart=/home/ec2-user/watch_conn.sh
+
+[Install]
+WantedBy=multi-user.target

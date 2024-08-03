@@ -708,7 +708,7 @@ Each supported game comes with a default instance type, but it can be changed. D
 When choosing an EC2 instance type, consider:
 
 - CPU architecture (e.g `arm64` are generally cheaper but some games don't support it)
-- Available vCPU and RAM
+- Available vCPU and RAM (based on game server requirements)
 - System single-core and multi-core [performance scores](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2)
 - [Instance generation](https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html) (newer generations are more performant)
 - Spot price and price history
@@ -723,7 +723,7 @@ To help choose a instance type different from the defaults, check out:
 - [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/) - Official way to check spot interruption frequency
 - [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html) - Similar to Vantage
 
-Some examples of families you could choose (check your game server requirements): `r8g`, `m7a`, `m7g`, `c7g` and `c7a`.
+Some examples of families you could choose: `r8g`, `m7a`, `m7g`, `c7g` and `c7a`.
 
 If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
 

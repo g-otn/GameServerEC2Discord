@@ -8,16 +8,29 @@ resource "aws_security_group" "instance" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "main_port" {
+resource "aws_vpc_security_group_ingress_rule" "main_port_tcp" {
   security_group_id = aws_security_group.instance.id
-  description       = "Allow Game main port"
+  description       = "Allow Game main port TCP"
   from_port         = local.game.main_port
   to_port           = local.game.main_port
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
 
   tags = {
-    Name = "${local.game.game_name} Main Port SG Rule"
+    Name = "${local.game.game_name} Main Port TCP SG Rule"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "main_port_udp" {
+  security_group_id = aws_security_group.instance.id
+  description       = "Allow Game main port UDP"
+  from_port         = local.game.main_port
+  to_port           = local.game.main_port
+  ip_protocol       = "udp"
+  cidr_ipv4         = "0.0.0.0/0"
+
+  tags = {
+    Name = "${local.game.game_name} Main Port UDP SG Rule"
   }
 }
 

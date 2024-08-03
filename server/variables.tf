@@ -16,8 +16,8 @@ variable "game" {
   type        = string
 
   validation {
-    condition     = contains(["minecraft", "terraria", "custom"], var.game)
-    error_message = "Valid values are: minecraft, terraria, custom"
+    condition     = contains(["minecraft", "terraria", "factorio", "custom"], var.game)
+    error_message = "Valid values are: minecraft, terraria, factorio, custom"
   }
 }
 

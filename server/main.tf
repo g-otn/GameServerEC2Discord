@@ -13,8 +13,8 @@ locals {
 
   duckdns_domain = var.ddns_service == "duckdns" ? regex("^([^.]+)\\.duckdns\\.org$", var.hostname)[0] : null
 
-  server_data_path = "/srv/${var.game == "custom" ? lower(var.custom_game_name) : var.game}"
-
+  data_mount_path     = "/srv/${var.game == "custom" ? lower(var.custom_game_name) : var.game}"
+  data_subfolder_path = "${local.data_mount_path}/data"
   game_defaults_map = {
     minecraft = {
       game_name                 = "Minecraft"
@@ -32,6 +32,15 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 1)
       compose_main_service_name = "terraria"
       main_port                 = coalesce(var.main_port, 7777)
+      watch_connections         = coalesce(var.watch_connections, true)
+    }
+    factorio = {
+      game_name                 = "Factorio"
+      instance_type             = coalesce(var.instance_type, "m7a.medium")
+      arch                      = coalesce(var.arch, "x86_64")
+      data_volume_size          = coalesce(var.data_volume_size, 2)
+      compose_main_service_name = "factorio"
+      main_port                 = coalesce(var.main_port, 34197)
       watch_connections         = coalesce(var.watch_connections, true)
     }
     custom = {
@@ -77,7 +86,7 @@ locals {
             MAX_MEMORY : "6200M"
           }, var.compose_game_environment)
           volumes : [
-            "${local.server_data_path}:/data"
+            "${local.data_subfolder_path}:/data"
           ]
           deploy : {
             resources : {
@@ -85,6 +94,7 @@ locals {
             }
           }
           restart : "no"
+          stop_grace_period : "1m"
         }
       }
     }, var.compose_top_level_elements)
@@ -97,8 +107,25 @@ locals {
           environment : merge({}, var.compose_game_environment)
           command : "-world /root/.local/share/Terraria/Worlds/${var.id}.wld -autocreate ${var.terraria_world_size}"
           volumes : [
-            "${local.server_data_path}:/root/.local/share/Terraria/Worlds"
+            "${local.data_subfolder_path}:/root/.local/share/Terraria/Worlds"
           ]
+          restart : "no"
+          stop_grace_period : "1m"
+        }
+      }
+    }, var.compose_top_level_elements)
+
+    factorio = merge({
+      services : {
+        "${local.game_defaults_map.factorio.compose_main_service_name}" : {
+          image : "factoriotools/factorio:stable",
+          ports : coalesce(var.compose_game_ports, ["34197:34197/udp"]),
+          environment : merge({}, var.compose_game_environment)
+          volumes : [
+            "${local.data_subfolder_path}:/factorio",
+          ]
+          restart : "no"
+          stop_grace_period : "1m"
         }
       }
     }, var.compose_top_level_elements)

@@ -2,20 +2,20 @@ locals {
   device_name = "/dev/sdm"
 
   compose_start_file_content_b64 = base64encode(templatefile(("./server/systemd/compose_start.service"), {
-    server_data_path = local.server_data_path
+    data_mount_path = local.data_mount_path
   }))
 
   auto_shutdown_service_file_content_b64 = base64encode(file("./server/systemd/auto_shutdown/auto_shutdown.service"))
   auto_shutdown_timer_file_content_b64   = base64encode(file("./server/systemd/auto_shutdown/auto_shutdown.timer"))
   auto_shutdown_script_file_content_b64 = base64encode(templatefile("./server/systemd/auto_shutdown/auto_shutdown.sh", {
-    server_data_path          = local.server_data_path
+    data_mount_path           = local.data_mount_path
     compose_main_service_name = local.game.compose_main_service_name
   }))
 
   watch_conn_service_file_content_b64 = base64encode(file("./server/systemd/watch_conn/watch_conn.service"))
   watch_conn_script_file_content_b64 = base64encode(templatefile("./server/systemd/watch_conn/watch_conn.sh", {
     main_port                 = local.game.main_port
-    server_data_path          = local.server_data_path
+    data_mount_path           = local.data_mount_path
     compose_main_service_name = local.game.compose_main_service_name
   }))
 
@@ -30,8 +30,8 @@ locals {
 
     arch = local.game.arch
 
-    server_data_path = local.server_data_path
-    device_name      = local.device_name
+    data_mount_path = local.data_mount_path
+    device_name     = local.device_name
 
     ddns_service = var.ddns_service
 

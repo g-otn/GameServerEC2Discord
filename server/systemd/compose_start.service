@@ -8,8 +8,8 @@ ReloadPropagatedFrom=docker.service
 Type=simple
 User=ec2-user
 Group=ec2-user
-ExecStart=docker compose -f ${server_data_path}/docker-compose.yml up -d
-ExecReload=docker compose -f ${server_data_path}/docker-compose.yml up -d
+ExecStart=docker compose -f ${data_mount_path}/docker-compose.yml up -d
+ExecReload=docker compose -f ${data_mount_path}/docker-compose.yml up -d
 
 [Install]
 WantedBy=multi-user.target

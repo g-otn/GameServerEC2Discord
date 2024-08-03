@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
     - [Required variables for each server module](#required-variables-for-each-server-module)
     - [Examples](#examples)
   - [Applying](#applying)
-  - [Discord interactions](#discord-interactions)
+  - [(Recommended) Discord interactions](#recommended-discord-interactions)
     - [Registering interaction endpoint](#registering-interaction-endpoint)
     - [Creating the guild commands](#creating-the-guild-commands)
   - [Automatic backups](#automatic-backups)
@@ -56,6 +56,7 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 
 - Minecraft (via [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server))
 - Terraria (via [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria))
+- Factorio (via [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio))
 
 **Others:**
 
@@ -86,7 +87,7 @@ The process of starting and automatically stopping a game server works as follow
 3. The Lambda function sends the interaction token alongside the `start` command to another Lambda via SNS and then [ACKs the interaction](https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type) to avoid Discord's 3s interaction response time limit.
 4. The other Lambda which can take its time, in this case, starts the EC2 instance. Other commands such as `stop`, `restart`, `ip` and `status` can stop, reboot and describe the instance.
 5. The instance starts
-6. The DDNS systemd service updates the domain with the new IP (this can take a while to update if the server is restarted often due to DNS caching)
+6. The DDNS systemd service updates the domain with the new IP
 7. The game systemd service runs the Docker Compose file to start the server
 8. The game shutdown systemd timer starts checking if the container is running
 9. After a minute or so (depending on the game, instance, etc), the server is ready to connect and play
@@ -101,7 +102,7 @@ Minecraft:
 <details>
   <summary>Other games</summary>
 
-![todo]()
+![diagram others](https://github.com/user-attachments/assets/d3ba7882-f58f-46ec-bfaf-8d7dea6e832b)
 
 </details>
 
@@ -109,8 +110,9 @@ Minecraft:
 
 ### TL;DR
 
-- Minecraft: **Less than 0.8 USD for 30h of gameplay per month** for 1 vCPU with 2.7GHz and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
-- Terraria: **Less than 0.8 USD for 30h of gameplay per month** for 1 vCPU with 3.7 GHz and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
+- Minecraft: **<=0.8 USD for 30h of gameplay per month** using 1x 2.7GHz vCPU and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
+- Terraria: **<=0.8 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
+- Factorio: **<=0.8 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=ff82441ec0eea51961558a2d6a5424d1422599cc))
 
 AWS Pricing Calculator estimates do not include Public IP cost, see tables below.
 
@@ -144,9 +146,22 @@ AWS Pricing Calculator estimates do not include Public IP cost, see tables below
 
 </details>
 
+<details>
+  <summary><b>Factorio</b></summary>
+
+| Service   | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/month |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| EC2       | [`m7a.medium`](https://instances.vantage.sh/aws/ec2/m7a.medium?min_memory=2&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.02      | $0.60           |
+| VPC       | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15           |
+| EBS       | 2GB volume for server data                                                                                                                                                                                    | ~$0.001    | ~$0.02          |
+| EBS       | Daily snapshots of 2GB volumes                                                                                                                                                                                | -          | ~$0.02          |
+| **Total** |                                                                                                                                                                                                               | **$0.026** | **$0.79**       |
+
+</details>
+
 ### Things to keep in mind
 
-- Last updated: July 2024 (please check the AWS Pricing Calculator estimate)
+- Last updated: August 2024 (please check the AWS Pricing Calculator estimates)
 - Region assumed is `us-east-2` (Ohio)
 - Prices are in USD
 - Assumes usage of [Always Free](https://aws.amazon.com/free/?nc2=h_ql_pr_ft&all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers (different from 12 month Free Tier)
@@ -192,6 +207,7 @@ Lambda; SNS; KMS; CloudWatch / X-Ray; Data transfer from EC2 to internet; Data t
 
 ## Prerequisites
 
+- Basic Terraform, Linux and SSH usage knowledge
 - An [AWS account](https://portal.aws.amazon.com/billing/signup)
   - AWS credentials allowing Terraform to create resources on your account ([example](https://www.youtube.com/watch?v=eupw9OP14z8))
 - An Discord app on the [Developer portal](https://discord.com/developers/applications)
@@ -448,13 +464,16 @@ module "terraria" {
 
 </details>
 
-### Discord interactions
+### (Recommended) Discord interactions
 
 <details open>
 
   <summary>Discord interactions</summary>
 
-Now that the server is up and running, you can set up your Discord server to be able to manage them!
+Now that the server is up and running, it should already shut itself down automatically after a while with no players.
+However you currently still need to start the server via AWS console.
+
+This is techinically optional, but to make starting your server easier, you could set up your Discord server to be able to manage them!
 
 #### Registering interaction endpoint
 
@@ -551,7 +570,7 @@ Please read if applicable!
 
 ### Minecraft post-setup
 
-You should set up a whitelist so only your friends can join the server.
+You should at least set up a whitelist so only your friends can join the server.
 
 You can do that by op-ing yourself by creating an whitelist on the Minecraft server console.
 
@@ -595,12 +614,32 @@ Finally, save around 600MiB-1GiB for the JVM / Off-heap memory. Examples:
 
 ### Terraria post-setup
 
-You should set up a server password so only you and your friends can join the server.
+You should at least set up a server password so only you and your friends can join the server.
 
 1. Connect to your running server instance using SSH (See [SSH](#ssh))
-2. Edit the file at `/srv/terraria/config.json`
+2. Edit the file at `/srv/terraria/data/config.json`
+   - You may need to use `sudo` to edit the file. (e.g `sudo nano /srv/terraria/data/config.json`)
 3. Set a password in the `Settings.ServerPassword` field
 4. Restart the server by running `docker compose restart terraria-terraria-1` or by restarting the whole instance.
+
+See also TShock [Config Settings](https://tshock.readme.io/docs/config-settings) and [Setting Up Your Server](https://tshock.readme.io/docs/setting-up-your-server).
+
+</details>
+
+<details>
+  <summary>Factorio</summary>
+
+### Factorio post-setup
+
+You should set at least set up a server password so only you and your friends can join the server.
+
+1. Connect to your running server instance using SSH (See [SSH](#ssh))
+2. Edit the file at `/srv/factorio/data/config/server-settings.json`
+   - You may need to use `sudo` to edit the file. (e.g `sudo nano /srv/factorio/data/config/server-settings.json`)
+3. Set a password in the `game_password` field
+4. Restart the server by running `docker compose restart terraria-terraria-1` or by restarting the whole instance.
+
+Consider also setting a name and description by editing the same file.
 
 See also TShock [Config Settings](https://tshock.readme.io/docs/config-settings) and [Setting Up Your Server](https://tshock.readme.io/docs/setting-up-your-server).
 
@@ -666,15 +705,14 @@ Choosing the instance type is has significant impact on the performance of the g
 
 Each supported game comes with a default instance type, but it can be changed. Don't forget to update the relevant Docker Compose variables (environment in case of Minecraft and deploy limits) to match the chosen instance type.
 
-What to consider mainly, when choosing:
+When choosing an EC2 instance type, consider:
 
 - CPU architecture (e.g `arm64` are generally cheaper but some games don't support it)
 - Available vCPU and RAM
-- CPU frequency (GHz)
+- System single-core and multi-core [performance scores](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2)
+- [Instance generation](https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html) (newer generations are more performant)
 - Spot price and price history
 - Spot interruption frequency (if it's too high there's more chance per month of the server going down while you're playing)
-
-For Minecraft, I'd recommend nothing less than 1 vCPU and 4GB RAM.
 
 To help choose a instance type different from the defaults, check out:
 
@@ -684,6 +722,8 @@ To help choose a instance type different from the defaults, check out:
 - [Geekbench Browser](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2) - Easier to check CPU performance by looking at benchmark scores
 - [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/) - Official way to check spot interruption frequency
 - [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html) - Similar to Vantage
+
+Some examples of families you could choose (check your game server requirements): `r8g`, `m7a`, `m7g`, `c7g` and `c7a`.
 
 If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
 
@@ -729,18 +769,19 @@ To define a custom game server (see also custom game [example](#examples)):
 2. Set common server-specific values such as `id`, `az`, `hostname` and other DDNS config.
 3. Set `game` to `custom` and define an alphanumeric `custom_game_name` (e.g `CustomGame`).
 4. Set the game's networking using `main_port` and add `sg_ingress_rules` as needed.
-5. Set the game's available storage using `data_volume_size` and backup frequency and retation using the `data_volume_snapshot_*` variables.
+5. Set the game's available storage using `data_volume_size` and backup frequency and retetion using the `data_volume_snapshot_*` variables.
    - If your volume is too big and/or the game data changes too much between snapshots (e.g big save files are compressed each time), consider lowering snapshot retention. Check AWS pricing calculator.
+   - If the Docker image you're going to use is too big (more than a couple of GBs), you may need to increase the root volume size.
 6. Configure the Docker Compose file which will be used within the instance by setting up at least the `compose_services` variable.
    - Create a service with the name `main`
    - Networking: Define the container `ports` to match `main_port` and `sg_ingress_rules`.
-   - Storage: Define a volume matching `server_data_path`, which is based from lowercase value of `custom_game_name`
+   - Storage: Define a volume matching `data_mount_path`, which is based from lowercase value of `custom_game_name`
      (e.g `/srv/customgame`, See [server/main.tf](server/main.tf)).
    - Environment: Fill in environment variables required by your image.
 7. Set the `instance_type` and matching `arch`. See [Server instance type](#server-instance-type).
 8. To test the instance for the first time, disable `auto_shutdown`. Don't forget to re-enable it!
 9. Run `terraform init` since this is a new module
-10. Follow [Applying](#applying) and [Discord interactions](#discord-interactions) again to create the resources and update your Discord app slash commands.
+10. Follow [Applying](#applying) and [Discord interactions](#recommended-discord-interactions) again to create the resources and update your Discord app slash commands.
 
 ## Troubleshooting
 
@@ -760,8 +801,8 @@ ssh -i "~/.ssh/<my private key>.pem" "ec2-user@<myserver>.duckdns.org"
 - replace `<myserver>.duckdns.org` with the `hostname` you put in the Terraform `servers.tf` config for that server
 
 > [!NOTE]
-> Your SSH client may give you a warning or fail when connecting due to the IP changing between server restarts.
-> You can delete the `~/.ssh/known_hosts` file as a quick workaround.
+> Your SSH client may fail when connecting due to the IP changing between server restarts.
+> You can delete the `~/.ssh/known_hosts` file as a quick workaround. You may also need to clear your DNS cache.
 
 ### Useful info and commands
 

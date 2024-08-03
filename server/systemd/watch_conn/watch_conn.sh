@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # We can't use netstat or ss, see https://unix.stackexchange.com/a/758008/617433
-command="sudo conntrack -L --dst-nat | grep -w ${main_port} | grep -w -c ESTABLISHED"
+command="sudo conntrack -L --dst-nat | grep -w ${main_port} | grep -E 'ASSURED|ESTABLISHED' -w -c"
 
 # Sleep to avoid shutting down right after container start
 interval=1m
@@ -15,13 +15,12 @@ while [[ $no_conn_count -lt $max_count ]]; do
         echo "Established connection found, resetting count"
         (( no_conn_count = 0 ))
     else
-        echo "plus"
         (( no_conn_count++ ))
     fi;
 
     sleep $interval
 done
 
-echo "There has been no established connections for 10min. Stopping compose at ${server_data_path}"
-docker compose -f ${server_data_path}/docker-compose.yml down
+echo "There has been no established connections for 10min. Stopping compose at ${data_mount_path}"
+docker compose -f ${data_mount_path}/docker-compose.yml down
 exit 0;

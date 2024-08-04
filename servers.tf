@@ -6,8 +6,6 @@
 # ================================================================
 
 module "example" {
-  source = "./server"
-
   # Change these to desired values
   id       = "ExampleVanilla"
   game     = "minecraft"
@@ -22,6 +20,7 @@ module "example" {
   az          = "us-east-2a"
 
   # ------------ Common values (just copy and paste) -------------
+  source                     = "./server"
   iam_role_dlm_lifecycle_arn = module.global.iam_role_dlm_lifecycle_arn
   # --------------------------------------------------------------
 }

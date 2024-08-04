@@ -21,8 +21,6 @@ provider "aws" {
   # --------------------------------------
 }
 module "region_us-east-2" {
-  source = "./base_region"
-
   # Change these to desired values
   region = "us-east-2"
   azs    = ["us-east-2a"]
@@ -31,6 +29,7 @@ module "region_us-east-2" {
   providers = { aws = aws.us-east-2 }
 
   # ------------ Common values (just copy and paste) -------------
+  source         = "./base_region"
   ssh_public_key = var.ssh_public_key
   # --------------------------------------------------------------
 }

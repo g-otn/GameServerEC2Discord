@@ -310,14 +310,13 @@ For a full example, check the [`servers.tf`](servers.tf) and [`regions.tf`](regi
 
 ```tf
 module "example_server" {
-  source = "./server"
-
   id       = "ExampleVanilla"
   game     = "minecraft"
   az       = "us-east-2a"
   hostname = "example.duckdns.org"
 
   # ...
+  source = "./server"
 }
 ```
 
@@ -331,8 +330,6 @@ See https://docker-minecraft-server.readthedocs.io/en/latest/variables/
 
 ```tf
 module "example_plugins" {
-  source = "./server"
-
   # Change these to desired values
   id       = "ExamplePlugins"
   game     = "minecraft"
@@ -391,6 +388,7 @@ EOT
   az          = "us-east-2a"
 
   # ------------ Common values (just copy and paste) -------------
+  source                     = "./server"
   iam_role_dlm_lifecycle_arn = module.global.iam_role_dlm_lifecycle_arn
   # --------------------------------------------------------------
 }
@@ -425,8 +423,6 @@ See [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria/).
 
 ```tf
 module "terraria" {
-  source = "./server"
-
   # Change these to desired values
   id               = "CustomExample"
   game             = "custom"
@@ -448,6 +444,7 @@ module "terraria" {
   }
 
   // ...
+  source = "./server"
 }
 ```
 
@@ -671,7 +668,33 @@ This project supports multiple AWS regions, so you can have a server in `us-east
 
 ### Server ports
 
-Any extra port besides ICMP, SSH and `main_port` you want to open needs to be set both in `sg_ingress_rules` (VPC Security group rules) and `compose_game_ports` (Docker compose service ports) variables in a way in which they match.
+Any extra port besides ICMP, SSH and `main_port` you want to open needs to be set both in `sg_ingress_rules` (VPC Security group rules) and `compose_game_ports` (Docker compose service ports) variables in a way in which they match. For example, here's a configuration that opens the port 22222 and 33333:
+
+```hcl
+module "myserver" {
+  // ...
+  main_port = 11111
+
+  // it's not necessary to include main_port configuration in these variables
+  compose_game_ports = ["22222:22222", "33333:33333/udp"]
+  sg_ingress_rules = {
+    "admin panel" : {
+      description = "Admin panel using TCP"
+      from_port   = 22222
+      to_port     = 22222
+      ip_protocol = "tcp"
+      cidr_ipv4   = "0.0.0.0/0"
+    }
+    "video feed" : {
+      description = "Some video data using UDP"
+      from_port   = 33333
+      to_port     = 33333
+      ip_protocol = "udp"
+      cidr_ipv4   = "0.0.0.0/0"
+    }
+  }
+}
+```
 
 <details>
 
@@ -772,9 +795,9 @@ To define a custom game server (see also custom game [example](#examples)):
 5. Set the game's available storage using `data_volume_size` and backup frequency and retetion using the `data_volume_snapshot_*` variables.
    - If your volume is too big and/or the game data changes too much between snapshots (e.g big save files are compressed each time), consider lowering snapshot retention. Check AWS pricing calculator.
    - If the Docker image you're going to use is too big (more than a couple of GBs), you may need to increase the root volume size.
-6. Configure the Docker Compose file which will be used within the instance by setting up at least the `compose_services` variable.
-   - Create a service with the name `main`
-   - Networking: Define the container `ports` to match `main_port` and `sg_ingress_rules`.
+6. Configure the Docker Compose file which will be used within the instance by setting up at least the `compose_game_elements` variable:
+   - Image: Set the game's docker image/tag
+   - Networking: Define the container `ports` to match `main_port` and `sg_ingress_rules`
    - Storage: Define a volume matching `data_mount_path`, which is based from lowercase value of `custom_game_name`
      (e.g `/srv/customgame`, See [server/main.tf](server/main.tf)).
    - Environment: Fill in environment variables required by your image.

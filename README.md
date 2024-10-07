@@ -108,6 +108,9 @@ Minecraft:
 
 ## Cost breakdown
 
+> [!WARNING]
+> EBS provisioned storage costs are not being taken into account yet. This means a significant price increase depending on server data volume size. See https://github.com/g-otn/GameServerEC2Discord/issues/3
+
 ### TL;DR
 
 - Minecraft: **<=0.8 USD for 30h of gameplay per month** using 1x 2.7GHz vCPU and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
@@ -164,6 +167,7 @@ AWS Pricing Calculator estimates do not include Public IP cost, see tables below
 - Last updated: August 2024 (please check the AWS Pricing Calculator estimates)
 - Region assumed is `us-east-2` (Ohio)
 - Prices are in USD
+- Prices do not include Tax
 - Assumes usage of [Always Free](https://aws.amazon.com/free/?nc2=h_ql_pr_ft&all-free-tier.sort-by=item.additionalFields.SortRank&all-free-tier.sort-order=asc&awsf.Free%20Tier%20Types=tier%23always-free&awsf.Free%20Tier%20Categories=*all) monthly offers (different from 12 month Free Tier)
   - This is important mostly due to the monthly free 100GB [outbound data transfer](https://aws.amazon.com/ec2/pricing/on-demand/?nc1=h_ls#Data_Transfer) from EC2 to the internet. See [Always Free offers](#always-free-offers)
 - **The most important price factors are play time and instance type**

@@ -13,6 +13,8 @@ resource "aws_ebs_volume" "server_data" {
   tags = {
     Name = "${local.prefix_id_game} Data Volume"
     "${local.prefix}:DataVolume" : true
+    "${local.prefix}:Game"     = var.game
+    "${local.prefix}:ServerId" = var.id
   }
 }
 

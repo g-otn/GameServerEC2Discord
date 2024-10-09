@@ -62,6 +62,9 @@ locals {
   }
   root_volume_tags = {
     Name = "${local.prefix_id_game} Root Volume"
+    "${local.prefix}:RootVolume" : true
+    "${local.prefix}:Game"     = var.game
+    "${local.prefix}:ServerId" = var.id
   }
 }
 

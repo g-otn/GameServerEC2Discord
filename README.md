@@ -361,6 +361,8 @@ module "example_plugins" {
 
     "VERSION"     = "1.20.4"
     "ONLINE_MODE" = false
+    # Tip: you may have eventual problems with auto-download/update if you add plugins this way
+    # you may comment them out later and/or add them manually via SSH
     "PLUGINS"     = <<EOT
 https://cdn.modrinth.com/data/9eGKb6K1/versions/9yRemfrE/voicechat-bukkit-2.5.16.jar
 

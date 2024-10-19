@@ -16,8 +16,8 @@ variable "game" {
   type        = string
 
   validation {
-    condition     = contains(["minecraft", "terraria", "factorio", "custom"], var.game)
-    error_message = "Valid values are: minecraft, terraria, factorio, custom"
+    condition     = contains(["minecraft", "terraria", "factorio", "linuxgsm", "custom"], var.game)
+    error_message = "Valid values are: minecraft, terraria, factorio, linuxgsm, custom"
   }
 }
 
@@ -46,8 +46,8 @@ variable "main_port" {
   type        = number
   default     = null
   validation {
-    condition     = var.game != "custom" || var.main_port != null
-    error_message = "Main port must be set for custom games"
+    condition     = (var.game != "custom" && var.game != "linuxgsm") || var.main_port != null
+    error_message = "Main port must be set for custom games and LinuxGSM"
   }
 }
 
@@ -70,8 +70,8 @@ variable "instance_type" {
   type        = string
   default     = null
   validation {
-    condition     = var.game != "custom" || var.instance_type != null
-    error_message = "Instance type must be set for custom games"
+    condition     = (var.game != "custom" && var.game != "linuxgsm") || var.instance_type != null
+    error_message = "Instance type must be set for custom games and LinuxGSM"
   }
 }
 
@@ -81,8 +81,14 @@ variable "arch" {
   default     = null
   validation {
     condition     = var.instance_type != null ? (var.arch == "arm64" || var.arch == "x86_64") : var.arch == null
-    error_message = "When specifiying instance type, you must specify arch too. Arch must be 'arm64' or 'x86_64'"
+    error_message = "When specifiying instance type, you must specify arch too. Arch must be 'arm64' or 'x86_64' and must match the instance type"
   }
+}
+
+variable "root_volume_size" {
+  description = "The size, in GB, of the root volume. Make sure it's enough! You'll probably want at least 3GB"
+  type        = number
+  default     = 4 // 2GB is the minimum for AL2023 minimal, but by default it seems to use ~1.9GB, and we still need storage for docker images / etc
 }
 
 variable "data_volume_size" {
@@ -90,13 +96,13 @@ variable "data_volume_size" {
   type        = number
   default     = null
   validation {
-    condition     = var.game != "custom" || var.data_volume_size != null
-    error_message = "Data volume size must be set for custom games"
+    condition     = (var.game != "custom" && var.game != "linuxgsm") || var.data_volume_size != null
+    error_message = "Data volume size must be set for custom and linuxgsm games"
   }
 }
 
 variable "snapshot_id" {
-  description = "The snapshot ID to use for the data volume. Can be used to restore backups"
+  description = "The snapshot ID to use as the base of the data volume. Can be used to restore backups"
   type        = string
   default     = null
 }
@@ -113,10 +119,16 @@ variable "sg_ingress_rules" {
   default = {}
 }
 
+variable "data_volume_snapshots" {
+  description = "Enable data volume automatic snapshots via DLM"
+  type        = bool
+  default     = false
+}
+
 variable "data_volume_snapshot_retain_count" {
   description = "How many snapshots to retain. Snapshots are taken daily, so the number will correspond to the number of days"
   type        = number
-  default     = 7
+  default     = 5
 }
 
 variable "data_volume_snapshot_create_time" {
@@ -134,6 +146,10 @@ variable "compose_game_ports" {
   description = "The ports to expose and map to the game's Docker Compose service. Use if you want to expose extra ports from the container to outside the instance. Automatically set based on game"
   type        = list(string)
   default     = null
+  validation {
+    condition     = var.game != "linuxgsm" || var.compose_game_ports != null
+    error_message = "Compose game ports must be set when using LinuxGSM. Check the required or default ports for your chosen game"
+  }
 }
 
 variable "compose_game_environment" {
@@ -149,7 +165,7 @@ variable "compose_game_limits" {
 }
 
 variable "compose_game_elements" {
-  description = "Attributes for the game's Docker Compose main service. Can be used to set volumes, etc"
+  description = "Attributes for the game's Docker Compose main service. Can be used to override image, environment, ports, volumes, etc"
   type        = map(any)
   default     = {}
 }
@@ -254,5 +270,14 @@ variable "terraria_world_size" {
     condition     = var.terraria_world_size >= 1 && var.terraria_world_size <= 3
     error_message = "Terraria world size autocreate TShock paramter must be between 1 (small) and 3 (big)"
   }
+}
 
+variable "linuxgsm_game_shortname" {
+  description = "The game 'shortname' used by LinuxGSM to identify the game server. See https://github.com/GameServerManagers/LinuxGSM/blob/master/lgsm/data/serverlist.csv"
+  type        = string
+  default     = null
+  validation {
+    condition     = var.linuxgsm_game_shortname != null || var.game != "linuxgsm"
+    error_message = "If using 'linuxgsm', the LinuxGSM game shortname must be set"
+  }
 }

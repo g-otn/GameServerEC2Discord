@@ -2,6 +2,7 @@ resource "aws_dlm_lifecycle_policy" "backup_data" {
   description        = "Takes daily snapshots of server data EBS volumes and retains them for ${var.data_volume_snapshot_retain_count} days"
   execution_role_arn = var.iam_role_dlm_lifecycle_arn
   state              = "ENABLED"
+  count              = var.data_volume_snapshots ? 1 : 0
 
   policy_details {
     resource_types = ["VOLUME"]
@@ -27,9 +28,7 @@ resource "aws_dlm_lifecycle_policy" "backup_data" {
     }
 
     target_tags = {
-      "${local.prefix}:DataVolume" = true
-      "${local.prefix}:Game"       = var.game
-      "${local.prefix}:ServerId"   = var.id
+      "${local.prefix}:DataVolume" = var.id
     }
   }
 

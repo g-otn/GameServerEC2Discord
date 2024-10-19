@@ -1,5 +1,6 @@
 // https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
 // https://docs.aws.amazon.com/linux/al2023/ug/naming-and-versioning.html
+// https://docs.aws.amazon.com/linux/al2023/ug/image-comparison.html
 
 // Example:
 // arm64:
@@ -26,7 +27,7 @@ data "aws_ami" "latest_al2023_x86_64" {
 
   filter {
     name   = "name"
-    values = ["al2023-ami-2023*"] // for some reason "2023*" returns results but "2023-*" does not
+    values = ["al2023-ami-minimal-2023*"] // for some reason "2023*" returns results but "2023-*" does not
   }
 }
 
@@ -44,7 +45,7 @@ data "aws_ami" "latest_al2023_arm64" {
   }
   filter {
     name   = "name"
-    values = ["al2023-ami-2023*"]
+    values = ["al2023-ami-minimal-2023*"]
   }
 }
 

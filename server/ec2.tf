@@ -62,7 +62,7 @@ locals {
   }
   root_volume_tags = {
     Name = "${local.prefix_id_game} Root Volume"
-    "${local.prefix}:RootVolume" : true
+    "${local.prefix}:RootVolume" : var.id
     "${local.prefix}:Game"     = var.game
     "${local.prefix}:ServerId" = var.id
   }
@@ -100,11 +100,10 @@ module "ec2_spot_instance" {
   // Due to bug in the provider, spot instances and its root volumes are not being tagged automatically.
   // So we must tag them use aws_ec2_tag
   # enable_volume_tags = false
-  # root_block_device = [{
-  #   tags = {
-  #     Name = "${local.prefix_id_game} Root Volume"
-  #   }
-  # }]
+  root_block_device = [{
+    volume_size = var.root_volume_size
+    tags        = local.root_volume_tags
+  }]
   tags = {
     Name                       = "${local.prefix_sm_id_game} Spot Instance Request"
     "${local.prefix}:Game"     = var.game

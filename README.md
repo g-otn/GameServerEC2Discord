@@ -313,12 +313,12 @@ But you must modify the [`servers.tf`](servers.tf) file to create your server. G
 
 You'll need to set these for each server you want to create.
 
-| Name       | Description                                                                            |
-| ---------- | -------------------------------------------------------------------------------------- |
-| `id`       | Unique alphanumeric id for the server                                                  |
-| `game`     | The game this server is going to host. Valid values: `minecraft`, `custom`             |
-| `az`       | Which availability zone from the chosen region to place the server in.                 |
-| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required unless DDNS is `none` |
+| Name       | Description                                                                                                                                                                               |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`       | Unique alphanumeric id for the server                                                                                                                                                     |
+| `game`     | The game this server is going to host. Valid values: `linuxgsm`, `minecraft`, `terraria`, `factorio`, `custom`. Read [LinuxGSM](#linuxgsm) and [Custom game](#custom-game) if applicable. |
+| `az`       | Which availability zone from the chosen region to place the server in.                                                                                                                    |
+| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required unless DDNS is `none`                                                                                                    |
 
 Some other variables may be required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 
@@ -610,7 +610,7 @@ See also [Restoring a backup](#restoring-a-backup)
 
 Since you're running a public server, technically **anyone on the internet** can join your server and do anything (grief, cheat, crash the server, etc).
 This is most likely not desirable and you might want to do game-specific configuration
-to limit the server for you and your friends.
+to limit the server for you and your friends such as setting a password or whitelist.
 
 These are done in most cases by SSH-ing into your instance and then running commands or modifying some game server configuration files. (See also [SSH](#ssh))
 

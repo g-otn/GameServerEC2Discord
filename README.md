@@ -167,7 +167,7 @@ Again, these are just estimates.
 | ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
 |      |     | EC2     | [`m7a.medium`](https://instances.vantage.sh/aws/ec2/m7a.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.021     | $0.63        | $0.63                            |                                               |
 | ☑️   |     | EBS     | 4GB root volume + 2GB game data volume                                                                                                                                                                        | -          | ~$0.48       | -                                | ~$0.48                                        |
-| ☑️   |     | EBS     | (Optional) Snapshots of 2GB game data volume                                                                                                                                                                  | -          | ~$0.1        |                                  | ~$0.1                                         |
+|      |     | EBS     | (Optional) Snapshots of 2GB game data volume                                                                                                                                                                  | -          | ~$0.1        |                                  | ~$0.1                                         |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
 |      |     |         | **Total**                                                                                                                                                                                                     | $0.12      | **$2.13**    | **$0.63**                        | **$0.58**                                     |
@@ -513,6 +513,9 @@ module "terraria" {
 
 6. Run `terraform apply` after a while the instance and the game server should be running and accessible
 
+If the server is not acessible try connecting into the instance, disabling auto shutdown and check logs for errors.
+See [Useful info and commands](#useful-info-and-commands).
+
 > [!NOTE]  
 > For extra security, SSH-ing and ICMP pinging the instances are only accepted from IPv4 where the Terraform config was applied (e.g your computer). This means once your IPv4 changes, you must run `terraform apply` again to update the security groups rules, or do it manually. Otherwise you won't be able to ping / SSH.
 
@@ -711,9 +714,13 @@ See also TShock [Config Settings](https://tshock.readme.io/docs/config-settings)
 
 ### LinuxGSM post-setup
 
-Please check your game specific post-setup documentation.
+Please check your game specific post-setup documentation if available,
+but consider checking out [LinuxGSM own docs](https://docs.linuxgsm.com/game-servers) (left menu) which contains very useful information for some games.
 
 As a general tip, your game data, saves and configurations files might be structured using different folder structure and file names than the ones used in game-specific docker images.
+
+You can change LinuxGSM settings at `/srv/linuxgsm/data/config-lgsm/<short name>server/<short name>server.cfg`
+such as `servername` and `serverpassword`.
 
 </details>
 

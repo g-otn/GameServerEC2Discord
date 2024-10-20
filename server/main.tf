@@ -139,7 +139,10 @@ locals {
     linuxgsm = {
       container_name : coalesce(var.linuxgsm_game_shortname, "invalid")
       image : "gameservermanagers/gameserver:${coalesce(var.linuxgsm_game_shortname, "invalid")}"
-      ports : var.compose_game_ports
+      ports : concat([
+        "${var.main_port}:${var.main_port}/tcp",
+        "${var.main_port}:${var.main_port}/udp"
+      ], var.compose_game_ports)
       environment : merge({}, var.compose_game_environment)
       volumes : [
         "${local.data_subfolder_path}:/data",

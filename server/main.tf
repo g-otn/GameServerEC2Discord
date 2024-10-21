@@ -27,8 +27,8 @@ locals {
     }
     terraria = {
       game_name                 = "Terraria"
-      instance_type             = coalesce(var.instance_type, "m7a.medium")
-      arch                      = coalesce(var.arch, "x86_64")
+      instance_type             = coalesce(var.instance_type, "m8g.medium")
+      arch                      = coalesce(var.arch, "arm64")
       data_volume_size          = coalesce(var.data_volume_size, 1)
       compose_main_service_name = "terraria"
       main_port                 = coalesce(var.main_port, 7777)
@@ -41,6 +41,15 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 2)
       compose_main_service_name = "factorio"
       main_port                 = coalesce(var.main_port, 34197)
+      watch_connections         = coalesce(var.watch_connections, true)
+    }
+    satisfactory = {
+      game_name                 = "Satisfactory"
+      instance_type             = coalesce(var.instance_type, "r7a.medium")
+      arch                      = coalesce(var.arch, "x86_64")
+      data_volume_size          = coalesce(var.data_volume_size, 6)
+      compose_main_service_name = "satisfactory"
+      main_port                 = coalesce(var.main_port, 7777)
       watch_connections         = coalesce(var.watch_connections, true)
     }
     linuxgsm = {
@@ -136,13 +145,38 @@ locals {
       stop_grace_period : "1m"
     }
 
+    satisfactory = {
+      container_name : "satisfactory",
+      image : "wolveix/satisfactory-server",
+      ports : coalesce(var.compose_game_ports, ["7777:7777/tcp", "7777:7777/udp"]),
+      environment : merge({
+        "MAXPLAYERS" : 4
+        "PGID" : 1000
+        "PUID" : 1000
+        "ROOTLESS" : false
+        "STEAMBETA" : false
+      }, var.compose_game_environment)
+      healthcheck : {
+        test : ["CMD", "bash", "/healthcheck.sh"]
+        interval : "30s"
+        timeout : "10s"
+        retries : 3
+        start_period : "120s"
+      }
+      volumes : [
+        "${local.data_subfolder_path}:/config",
+      ]
+      restart : "no"
+      stop_grace_period : "1m"
+    }
+
     linuxgsm = {
       container_name : coalesce(var.linuxgsm_game_shortname, "invalid")
       image : "gameservermanagers/gameserver:${coalesce(var.linuxgsm_game_shortname, "invalid")}"
       ports : concat([
-        "${var.main_port}:${var.main_port}/tcp",
-        "${var.main_port}:${var.main_port}/udp"
-      ], var.compose_game_ports)
+        "${local.game.main_port}:${local.game.main_port}/tcp",
+        "${local.game.main_port}:${local.game.main_port}/udp"
+      ], coalesce(var.compose_game_ports, []))
       environment : merge({}, var.compose_game_environment)
       volumes : [
         "${local.data_subfolder_path}:/data",

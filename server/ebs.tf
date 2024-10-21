@@ -8,7 +8,7 @@ resource "aws_ebs_volume" "server_data" {
 
   snapshot_id = var.snapshot_id
 
-  final_snapshot = true
+  final_snapshot = var.data_volume_final_snapshot
 
   tags = {
     Name = "${local.prefix_id_game} Data Volume"

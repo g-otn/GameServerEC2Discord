@@ -58,6 +58,7 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 - Minecraft (via [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server))
 - Terraria (via [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria))
 - Factorio (via [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio))
+- Satisfactory (via [wolveix/satisfactory-server](https://hub.docker.com/r/wolveix/satisfactory-server))
 
 **LinuxGSM**
 
@@ -119,9 +120,10 @@ Minecraft:
 
 Assuming one server and AWS free tier/offers:
 
-- Minecraft: **<=0.7 USD for 30h of gameplay per month** using 1x 2.7GHz vCPU and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
-- Terraria: **<=0.7 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
-- Factorio: **<=0.7 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=ff82441ec0eea51961558a2d6a5424d1422599cc))
+- Minecraft: **<0.7 USD for 30h of gameplay per month** using 1x 2.7GHz vCPU and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
+- Terraria: **<0.5 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
+- Factorio: **<0.7 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=ff82441ec0eea51961558a2d6a5424d1422599cc))
+- Satisfactory: **<0.9 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 8GB of DDR5 RAM ([estimate]())
 
 AWS Pricing Calculator estimates do not include Public IP cost, see tables below.
 
@@ -151,12 +153,12 @@ Again, these are just estimates.
 
 | 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
 | ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
-|      |     | EC2     | [`m7a.medium`](https://instances.vantage.sh/aws/ec2/m7a.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.021     | $0.63        | $0.63                            |                                               |
+|      |     | EC2     | [`m8g.medium`](https://instances.vantage.sh/aws/ec2/m7a.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.015     | $0.45        | $0.45                            |                                               |
 | ☑️   |     | EBS     | 4GB root volume + 1GB game data volume                                                                                                                                                                        | -          | ~$0.4        | -                                | ~$0.4                                         |
 | ☑️   |     | EBS     | (Optional) Snapshots of 1GB game data volume                                                                                                                                                                  | -          | ~$0.05       |                                  | ~$0.05                                        |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
-|      |     |         | **Total**                                                                                                                                                                                                     | $0.12      | **$2.13**    | **$0.63**                        | **$0.45**                                     |
+|      |     |         | **Total**                                                                                                                                                                                                     | $0.12      | **$1.95**    | **$0.45**                        | **$0.45**                                     |
 
 </details>
 
@@ -171,6 +173,20 @@ Again, these are just estimates.
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
 |      |     |         | **Total**                                                                                                                                                                                                     | $0.12      | **$2.13**    | **$0.63**                        | **$0.58**                                     |
+
+</details>
+
+<details>
+  <summary><b>Satisfactory</b></summary>
+
+| 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
+| ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
+|      |     | EC2     | [`r7a.medium`](https://instances.vantage.sh/aws/ec2/r7a.medium?min_memory=8&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=r7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.028     | $0.84        | $0.84                            |                                               |
+| ☑️   |     | EBS     | 4GB root volume + 6GB game data volume                                                                                                                                                                        | -          | ~$0.8        | -                                | ~$0.48                                        |
+|      |     | EBS     | (Optional) Snapshots of 6GB game data volume                                                                                                                                                                  | -          | ~$0.3        |                                  | ~$0.3                                         |
+| ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
+|      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
+|      |     |         | **Total**                                                                                                                                                                                                     | $0.12      | **$2.99**    | **$0.84**                        | **$0.78**                                     |
 
 </details>
 

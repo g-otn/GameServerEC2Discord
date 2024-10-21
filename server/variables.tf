@@ -16,8 +16,8 @@ variable "game" {
   type        = string
 
   validation {
-    condition     = contains(["minecraft", "terraria", "factorio", "linuxgsm", "custom"], var.game)
-    error_message = "Valid values are: minecraft, terraria, factorio, linuxgsm, custom"
+    condition     = contains(["minecraft", "terraria", "factorio", "satisfactory", "linuxgsm", "custom"], var.game)
+    error_message = "Valid values are: minecraft, terraria, factorio, satisfactory, linuxgsm, custom"
   }
 }
 
@@ -99,6 +99,12 @@ variable "data_volume_size" {
     condition     = (var.game != "custom" && var.game != "linuxgsm") || var.data_volume_size != null
     error_message = "Data volume size must be set for custom and linuxgsm games"
   }
+}
+
+variable "data_volume_final_snapshot" {
+  description = "Create final snapshot when destroying data volume"
+  type        = bool
+  default     = true
 }
 
 variable "snapshot_id" {

@@ -32,7 +32,7 @@ resource "aws_dlm_lifecycle_policy" "backup_data" {
     }
   }
 
-  tags = {
+  tags = merge({
     Name = "${local.prefix_sm_id_game} Data volume backup Lifecycle Policy"
-  }
+  }, local.common_tags, local.application_tags)
 }

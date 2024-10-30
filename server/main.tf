@@ -1,13 +1,14 @@
 locals {
-  common_tags = {
-    "${local.prefix}:Game" : var.game
-    "${local.prefix}:ServerId" : var.id
-  }
 
   prefix            = "GameServerEC2Discord"
   prefix_sm         = "GSED"
   prefix_id_game    = "${local.prefix} ${var.id} ${local.game.game_name}"
   prefix_sm_id_game = "${local.prefix_sm} ${var.id} ${local.game.game_name}"
+
+  common_tags = {
+    "${local.prefix}:Game" : var.game
+    "${local.prefix}:ServerId" : var.id
+  }
 
   subnet_id = var.base_region.public_subnets[index(var.base_region.available_azs, var.az)]
 
@@ -50,6 +51,15 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 6)
       compose_main_service_name = "satisfactory"
       main_port                 = coalesce(var.main_port, 7777)
+      watch_connections         = coalesce(var.watch_connections, true)
+    }
+    valheim = {
+      game_name                 = "Valheim"
+      instance_type             = coalesce(var.instance_type, "m7a.medium")
+      arch                      = coalesce(var.arch, "x86_64")
+      data_volume_size          = coalesce(var.data_volume_size, 3)
+      compose_main_service_name = "valheim"
+      main_port                 = coalesce(var.main_port, 2456)
       watch_connections         = coalesce(var.watch_connections, true)
     }
     linuxgsm = {
@@ -169,6 +179,26 @@ locals {
       restart : "no"
       stop_grace_period : "1m"
     }
+
+    valheim = {
+      container_name : "valheim",
+      image : "ghcr.io/lloesche/valheim-server",
+      ports : coalesce(var.compose_game_ports, ["2456-2458:2456-2458/udp"]),
+      environment : merge({
+        SERVER_NAME : "${var.id}"
+        WORLD_NAME : "${var.id}"
+        SERVER_PASS : "valheim"
+        SERVER_ARGS : "-crossplay"
+      }, var.compose_game_environment)
+      volumes : [
+        "${local.data_mount_path}/config:/config",
+        "${local.data_mount_path}/data:/opt/valheim",
+      ]
+      cap_add : ["SYS_NICE"]
+      restart : "no"
+      stop_grace_period : "2m"
+    }
+
 
     linuxgsm = {
       container_name : coalesce(var.linuxgsm_game_shortname, "invalid")

@@ -10,12 +10,10 @@ resource "aws_ebs_volume" "server_data" {
 
   final_snapshot = var.data_volume_final_snapshot
 
-  tags = {
+  tags = merge({
     Name = "${local.prefix_id_game} Data Volume"
     "${local.prefix}:DataVolume" : var.id
-    "${local.prefix}:Game"     = var.game
-    "${local.prefix}:ServerId" = var.id
-  }
+  }, local.common_tags, local.application_tags)
 }
 
 resource "aws_volume_attachment" "attach_server_data_to_instance" {

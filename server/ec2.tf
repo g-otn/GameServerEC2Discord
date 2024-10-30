@@ -51,21 +51,17 @@ locals {
     duckdns_service_file_content_b64 = local.duckdns_service_file_content_b64
   })
 
-  instance_tags = {
+  instance_tags = merge({
     Name                       = "${local.prefix_sm_id_game} Spot Instance"
     "${local.prefix}:Related"  = true
-    "${local.prefix}:Game"     = var.game
-    "${local.prefix}:ServerId" = var.id
     "${local.prefix}:Hostname" = var.hostname
     "${local.prefix}:Region"   = data.aws_region.default.name
     "${local.prefix}:MainPort" = local.game.main_port
-  }
-  root_volume_tags = {
+  }, local.common_tags)
+  root_volume_tags = merge({
     Name = "${local.prefix_id_game} Root Volume"
     "${local.prefix}:RootVolume" : var.id
-    "${local.prefix}:Game"     = var.game
-    "${local.prefix}:ServerId" = var.id
-  }
+  }, local.common_tags)
 }
 
 module "ec2_spot_instance" {
@@ -102,16 +98,9 @@ module "ec2_spot_instance" {
   # enable_volume_tags = false
   root_block_device = [{
     volume_size = var.root_volume_size
-    tags        = local.root_volume_tags
+    tags        = merge(local.root_volume_tags, local.application_tags)
   }]
-  tags = {
-    Name                       = "${local.prefix_sm_id_game} Spot Instance Request"
-    "${local.prefix}:Game"     = var.game
-    "${local.prefix}:ServerId" = var.id
-    "${local.prefix}:Hostname" = var.hostname
-    "${local.prefix}:Region"   = data.aws_region.default.name
-    "${local.prefix}:MainPort" = local.game.main_port
-  }
+  tags = merge(local.instance_tags, local.application_tags)
 }
 resource "aws_ec2_tag" "instance_tags_workaround" {
   for_each    = local.instance_tags
@@ -125,4 +114,16 @@ resource "aws_ec2_tag" "root_volume_tags_workaround" {
   resource_id = module.ec2_spot_instance.root_block_device[0].volume_id
   key         = each.key
   value       = each.value
+}
+
+resource "aws_ec2_tag" "instance_application_tag_workaround" {
+  resource_id = module.ec2_spot_instance.spot_instance_id
+  key         = keys(local.application_tags)[0]
+  value       = local.application_tags[keys(local.application_tags)[0]]
+}
+
+resource "aws_ec2_tag" "root_volume_application_tag_workaround" {
+  resource_id = module.ec2_spot_instance.root_block_device[0].volume_id
+  key         = keys(local.application_tags)[0]
+  value       = local.application_tags[keys(local.application_tags)[0]]
 }

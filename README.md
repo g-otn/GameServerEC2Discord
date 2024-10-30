@@ -726,6 +726,17 @@ See also TShock [Config Settings](https://tshock.readme.io/docs/config-settings)
 </details>
 
 <details>
+  <summary>Satisfactory</summary>
+
+### Satisfactory post-setup
+
+The server can be set up in-game via "Server Manager" in the main menu.
+
+In there you should at least set up a server password (different from admin password) so only you and your friends can join the server.
+
+</details>
+
+<details>
   <summary>LinuxGSM</summary>
 
 ### LinuxGSM post-setup

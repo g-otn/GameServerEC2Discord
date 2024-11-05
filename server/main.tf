@@ -12,6 +12,8 @@ locals {
 
   subnet_id = var.base_region.public_subnets[index(var.base_region.available_azs, var.az)]
 
+  sg_ingress_rules = merge(var.sg_ingress_rules, coalesce(local.game.sg_ingress_rules, {}))
+
   duckdns_domain = var.ddns_service == "duckdns" ? regex("^([^.]+)\\.duckdns\\.org$", var.hostname)[0] : null
 
   data_mount_path     = "/srv/${var.game == "custom" ? lower(var.custom_game_name) : var.game}"
@@ -24,6 +26,7 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 5)
       compose_main_service_name = "mc"
       main_port                 = coalesce(var.main_port, 25565)
+      sg_ingress_rules          = {}
       watch_connections         = coalesce(var.watch_connections, false)
     }
     terraria = {
@@ -33,6 +36,7 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 1)
       compose_main_service_name = "terraria"
       main_port                 = coalesce(var.main_port, 7777)
+      sg_ingress_rules          = {}
       watch_connections         = coalesce(var.watch_connections, true)
     }
     factorio = {
@@ -42,6 +46,7 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 2)
       compose_main_service_name = "factorio"
       main_port                 = coalesce(var.main_port, 34197)
+      sg_ingress_rules          = {}
       watch_connections         = coalesce(var.watch_connections, true)
     }
     satisfactory = {
@@ -51,16 +56,27 @@ locals {
       data_volume_size          = coalesce(var.data_volume_size, 6)
       compose_main_service_name = "satisfactory"
       main_port                 = coalesce(var.main_port, 7777)
+      sg_ingress_rules          = {}
       watch_connections         = coalesce(var.watch_connections, true)
     }
     valheim = {
-      game_name                 = "Valheim"
-      instance_type             = coalesce(var.instance_type, "m7a.medium")
+      game_name = "Valheim"
+      // For some reason if instance has only one core, server seems to hang on 100% cpu during container startup
+      instance_type             = coalesce(var.instance_type, "c7i.large")
       arch                      = coalesce(var.arch, "x86_64")
-      data_volume_size          = coalesce(var.data_volume_size, 3)
+      data_volume_size          = coalesce(var.data_volume_size, 6)
       compose_main_service_name = "valheim"
       main_port                 = coalesce(var.main_port, 2456)
-      watch_connections         = coalesce(var.watch_connections, true)
+      sg_ingress_rules = {
+        "extra_1" : {
+          description = "Valheim required ports 2457-2458 UDP"
+          from_port   = 2457
+          to_port     = 2458
+          ip_protocol = "udp"
+          cidr_ipv4   = "0.0.0.0/0"
+        }
+      }
+      watch_connections = coalesce(var.watch_connections, true)
     }
     linuxgsm = {
       game_name                 = "LinuxGSM"
@@ -69,6 +85,7 @@ locals {
       data_volume_size          = var.data_volume_size
       compose_main_service_name = var.linuxgsm_game_shortname
       main_port                 = var.main_port
+      sg_ingress_rules          = {}
       watch_connections         = coalesce(var.watch_connections, true)
     }
     custom = {
@@ -78,6 +95,7 @@ locals {
       data_volume_size          = var.data_volume_size
       compose_main_service_name = "main"
       main_port                 = var.main_port
+      sg_ingress_rules          = {}
       watch_connections         = coalesce(var.watch_connections, true)
     }
   }
@@ -182,17 +200,27 @@ locals {
 
     valheim = {
       container_name : "valheim",
-      image : "ghcr.io/lloesche/valheim-server",
+      image : "mbround18/valheim:latest",
       ports : coalesce(var.compose_game_ports, ["2456-2458:2456-2458/udp"]),
-      environment : merge({
-        SERVER_NAME : "${var.id}"
-        WORLD_NAME : "${var.id}"
-        SERVER_PASS : "valheim"
-        SERVER_ARGS : "-crossplay"
-      }, var.compose_game_environment)
+      environment : merge(
+        {
+          PORT : 2456
+          NAME : "${var.id}"
+          WORLD : "${var.id}"
+          PASSWORD : "valheim"
+          PUBLIC : 1
+          AUTO_BACKUP : 1
+          AUTO_BACKUP_ON_SHUTDOWN : 1
+          AUTO_BACKUP_PAUSE_WITH_NO_PLAYERS : 1
+          WEBHOOK_INCLUDE_PUBLIC_IP : 1
+        },
+        var.instance_timezone != null ? { TZ : var.instance_timezone } : {},
+        var.compose_game_environment
+      )
       volumes : [
-        "${local.data_mount_path}/config:/config",
-        "${local.data_mount_path}/data:/opt/valheim",
+        "${local.data_mount_path}/backups:/home/steam/backups",
+        "${local.data_mount_path}/saves:/home/steam/.config/unity3d/IronGate/Valheim",
+        "${local.data_mount_path}/server:/home/steam/valheim",
       ]
       cap_add : ["SYS_NICE"]
       restart : "no"

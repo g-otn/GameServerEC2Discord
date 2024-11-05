@@ -163,9 +163,9 @@ Object.entries(guildMap).forEach(([guildId, servers]) => {
         name_localizations: {
           'pt-BR': 'iniciar',
         },
-        description: 'Starts the Minecraft server',
+        description: 'Starts a server',
         description_localizations: {
-          'pt-BR': 'Inicia o servidor de Minecraft',
+          'pt-BR': 'Inicia um servidor',
         },
         options,
       },
@@ -175,9 +175,9 @@ Object.entries(guildMap).forEach(([guildId, servers]) => {
         name_localizations: {
           'pt-BR': 'parar',
         },
-        description: "Stops the Minecraft server, if it's online",
+        description: "Stops a server, if it's online",
         description_localizations: {
-          'pt-BR': 'Desliga o servidor de Minecraft, se estiver online',
+          'pt-BR': 'Desliga um servidor, se estiver online',
         },
         options,
       },
@@ -187,9 +187,9 @@ Object.entries(guildMap).forEach(([guildId, servers]) => {
         name_localizations: {
           'pt-BR': 'reiniciar',
         },
-        description: 'Restarts the Minecraft server, se estiver online',
+        description: "Restarts a server, if it's online",
         description_localizations: {
-          'pt-BR': 'Reinicia o servidor de Minecraft, se estiver online',
+          'pt-BR': 'Reinicia um servidor, se estiver online',
         },
         options,
       },
@@ -213,5 +213,5 @@ Object.entries(guildMap).forEach(([guildId, servers]) => {
       },
     ],
     guildId
-  ).then(() => console.log('Done guild', guildId));
+  ).then(() => console.log('Done guild', guildId, '\n'));
 });

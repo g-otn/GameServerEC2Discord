@@ -3,6 +3,7 @@ packages:
   - htop
   - docker
   - conntrack
+  - nano
 
 bootcmd:
   # cloud-init runs before EBS volume mount (sometimes?), so we have to wait. See https://stackoverflow.com/a/77868589/11138267

@@ -56,9 +56,10 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 **Supported**
 
 - Minecraft (via [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server))
-- Terraria (via [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria))
-- Factorio (via [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio))
-- Satisfactory (via [wolveix/satisfactory-server](https://hub.docker.com/r/wolveix/satisfactory-server))
+- Terraria (via [ryshe/terraria](https://github.com/ryansheehan/terraria))
+- Factorio (via [factoriotools/factorio](https://github.com/factoriotools/factorio-docker))
+- Satisfactory (via [wolveix/satisfactory-server](https://github.com/wolveix/satisfactory-server))
+- Valheim (via [mbround18/valheim-docker](https://github.com/mbround18/valheim-docker))
 
 **LinuxGSM**
 
@@ -477,7 +478,34 @@ module "linuxgsm" {
 
 <details>
 
-  <summary>Multiple servers</summary>
+  <summary>Valheim server</summary>
+
+```tf
+module "valheim" {
+  id       = "GSEDValheimExample"
+  game     = "valheim"
+  hostname = "valheim-example.duckdns.org"
+
+  compose_game_environment = {
+    "NAME" : "My GSED Valheim Server",
+    "PASSWORD" : "friendsonly"
+    "WEBHOOK_URL" : "https://discord.com/api/webhooks/.../..." # optional
+  }
+
+  # DDNS
+  duckdns_token = var.duckdns_token
+
+  # Region (change these to desired region)
+  base_region = module.region_us-east-2.base_region
+  providers   = { aws = aws.us-east-2 }
+  az          = "us-east-2a"
+
+  # ------------ Common values (just copy and paste) -------------
+  source                     = "./server"
+  iam_role_dlm_lifecycle_arn = module.global.iam_role_dlm_lifecycle_arn
+  # --------------------------------------------------------------
+}
+```
 
 </details>
 
@@ -733,6 +761,19 @@ See also TShock [Config Settings](https://tshock.readme.io/docs/config-settings)
 The server can be set up in-game via "Server Manager" in the main menu.
 
 In there you should at least set up a server password (different from admin password) so only you and your friends can join the server.
+
+</details>
+
+<details>
+  <summary>Valheim</summary>
+
+### Valheim post-setup
+
+By default, the server is created with a password of `valheim` and should be visible in the server list depending on your region. (default server name is the server Terraform module id)
+
+You may change the server password, among [other things](https://github.com/mbround18/valheim-docker?tab=readme-ov-file#environment-variables) such as server name via the `compose_game_environment` server module Terraform variable. See "Valheim server" in [Examples](#examples)
+
+You must run `terraform apply` again to apply the changes.
 
 </details>
 

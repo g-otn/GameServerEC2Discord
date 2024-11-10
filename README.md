@@ -83,30 +83,30 @@ The idea is reduce costs by mainly:
 This is achieved by:
 
 1. Starting the server via Discord slash commands interactions
-   - Slash commands work via webhook which don't require a Discord bot running 24/7, so we can use AWS Lambda + Lambda Function URL _(GCP Cloud Run could work too)_
-2. Using the Auto-stop feature from [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) _(a plugin like [vincss/mcEmptyServerStopper](https://github.com/vincss/mcEmptyServerStopper) could work too)_ alongside a systemd timer
+   - Slash commands work via webhook which don't require a Discord bot running 24/7, so we can use AWS Lambda + Lambda Function URL
+2. Using the Auto-stop feature from [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server), or watching for active connections in a specific port, alongside a systemd timer
 3. Setting up Duck DNS inside the instance _(No-IP could work too)_
 
 ### Workflow
 
-The process of starting and automatically stopping a game server works as follows:
+After setup, the process of starting and automatically stopping a game server works as follows:
 
 1. The player types `/start` in a Discord server text channel
-2. [Discord calls](https://discord.com/developers/docs/interactions/overview#preparing-for-interactions) our Lambda function via its Function URL
-3. The Lambda function sends the interaction token alongside the `start` command to another Lambda via SNS and then [ACKs the interaction](https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type) to avoid Discord's 3s interaction response time limit.
+2. Discord [calls](https://discord.com/developers/docs/interactions/overview#preparing-for-interactions) our Lambda function via its Function URL
+3. The Lambda function sends the interaction token alongside the `start` command to another Lambda via SNS and then [ACKs the interaction](https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type) to try avoiding Discord's 3s interaction response time limit.
 4. The other Lambda which can take its time, in this case, starts the EC2 instance. Other commands such as `stop`, `restart`, `ip` and `status` can stop, reboot and describe the instance.
 5. The instance starts
 6. The DDNS systemd service updates the domain with the new IP
 7. The game systemd service runs the Docker Compose file to start the server
-8. The game shutdown systemd timer starts checking if the container is running
+8. The instance shutdown systemd timer starts checking if the container is running
 9. After a minute or so (depending on the game, instance, etc), the server is ready to connect and play
-10. After 10 minutes without a connection or after the last player disconnects, the server is shutdown automatically via the [Auto-stop feature](https://docker-minecraft-server.readthedocs.io/en/latest/misc/autopause-autostop/autostop/) (Minecraft) or a script (other games).
-11. After a minute or so, the auto-shutdown systemd timer/service notices that the container is stopped and shuts down the whole instance.
+10. After 10 minutes without a connection or after the last player disconnects, the server is shutdown automatically via the [Auto-stop feature](https://docker-minecraft-server.readthedocs.io/en/latest/misc/autopause-autostop/autostop/) (Minecraft) or a systemd service (other games).
+12. After a minute or so, the instance shutdown systemd timer/service notices that the container is stopped and shuts down the whole instance.
 
 ### Diagram
 
 Minecraft:
-![diagram](https://github.com/g-otn/minecraft-spot-discord/assets/44736064/d7a4a2d6-4eae-4e5b-a44d-88fc9ab10d0a)
+![diagram](https://github.com/g-otn/GameServerEC2Discord/assets/44736064/d7a4a2d6-4eae-4e5b-a44d-88fc9ab10d0a)
 
 <details>
   <summary>Other games</summary>
@@ -134,7 +134,7 @@ AWS Pricing Calculator estimates do not include Public IP cost, see tables below
 Again, these are just estimates.
 
 - ☑️ - Covered by **12**-month **F**ree **T**ier (assuming one server)
-- ✅ - Covered by **A**lways **F**ree offers (assuming one server)
+- ✅ - Covered by monthly **A**lways **F**ree offers (assuming one server)
 
 <details open>
   <summary><b>Minecraft</b></summary>
@@ -155,7 +155,7 @@ Again, these are just estimates.
 
 | 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
 | ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
-|      |     | EC2     | [`m8g.medium`](https://instances.vantage.sh/aws/ec2/m7a.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.015     | $0.45        | $0.45                            |                                               |
+|      |     | EC2     | [`m8g.medium`](https://instances.vantage.sh/aws/ec2/m8g.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m8g.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.015     | $0.45        | $0.45                            |                                               |
 | ☑️   |     | EBS     | 4GB root volume + 1GB game data volume                                                                                                                                                                        | -          | ~$0.4        | -                                | ~$0.4                                         |
 | ☑️   |     | EBS     | (Optional) Snapshots of 1GB game data volume                                                                                                                                                                  | -          | ~$0.05       |                                  | ~$0.05                                        |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |

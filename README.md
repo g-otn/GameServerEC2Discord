@@ -63,7 +63,7 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 
 **LinuxGSM**
 
-- All above, Satisfactory, Valheim, Palworld and [**many more**](https://linuxgsm.com/servers/) should be supported via [LinuxGSM](https://hub.docker.com/r/gameservermanagers/gameserver)
+- All above, Palworld, ARK: Survival Evolved and [**many more**](https://linuxgsm.com/servers/) should be supported via [LinuxGSM](https://hub.docker.com/r/gameservermanagers/gameserver)
 
 _Not all games supported by LinuxGSM have been tested with this project._ See also [usage stats](https://linuxgsm.com/data/usage/).
 
@@ -121,10 +121,11 @@ Minecraft:
 
 Assuming one server and AWS free tier/offers:
 
-- Minecraft: **<0.7 USD for 30h of gameplay per month** using 1x 2.7GHz vCPU and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
-- Terraria: **<0.5 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
-- Factorio: **<0.7 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=ff82441ec0eea51961558a2d6a5424d1422599cc))
-- Satisfactory: **<0.9 USD for 30h of gameplay per month** using 1x 3.7 GHz vCPU and 8GB of DDR5 RAM ([estimate]())
+- Minecraft: **~0.7 USD for 30h of gameplay** using 1x 2.7GHz vCPU and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
+- Terraria: **~0.5 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
+- Factorio: **~0.7 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=ff82441ec0eea51961558a2d6a5424d1422599cc))
+- Satisfactory: **~0.9 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 8GB of DDR5 RAM ([estimate]())
+- Valheim: **~1 USD for 30h of gameplay** using 2x 3.2 GHz vCPU and 4GB of DDR5 RAM ([estimate]())
 
 AWS Pricing Calculator estimates do not include Public IP cost, see tables below.
 
@@ -191,6 +192,20 @@ Again, these are just estimates.
 
 </details>
 
+<details>
+  <summary><b>Valheim</b></summary>
+
+| 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                  | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
+| ---- | --- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
+|      |     | EC2     | [`c7i.large`](https://instances.vantage.sh/aws/ec2/c7i.large?min_memory=2&min_vcpus=2&region=us-east-2&cost_duration=daily&selected=c7i.large&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.031     | $0.93        | $0.93                            |                                               |
+| ☑️   |     | EBS     | 4GB root volume + 6GB game data volume                                                                                                                                                                     | -          | ~$0.8        | -                                | ~$0.48                                        |
+|      |     | EBS     | (Optional) Snapshots of 6GB game data volume                                                                                                                                                               | -          | ~$0.3        |                                  | ~$0.3                                         |
+| ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                          | $0.005     | $0.15        | -                                |                                               |
+|      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                   | $0.003     | $0.9         | -                                |                                               |
+|      |     |         | **Total**                                                                                                                                                                                                  | $0.12      | **$3.08**    | **$0.93**                        | **$0.78**                                     |
+
+</details>
+
 ### Things to keep in mind
 
 - Last updated: October 2024 (please check the AWS Pricing Calculator estimates)
@@ -205,11 +220,9 @@ Again, these are just estimates.
     - With availability
     - With time
     - Per region
-    - Per availability zone.
-      See Spot Instance pricing history in "AWS Console > EC2 > Instances > [Spot Requests](https://console.aws.amazon.com/ec2/home?region=us-east-2#SpotInstances:) > Pricing History" to see if this variation is significant and to choose the current best availability zone for you.
+    - Per availability zone. See [Availability Zones](#availability-zones).
   - You can always change the instance type, but don't forget to change the other related Terraform variables!
-  - Surplus vCPU usage credits charges when using [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html) (`t4g`, `t3a`, `t3` and `t2`) in unlimited mode (default). See [Earn CPU credits](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html#earning-CPU-credits) and [When to use unlimited mode versus fixed CPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#when-to-use-unlimited-mode).
-    - Basically, don't play at heavy CPU usage continuously for TOO long when using those instances types, or else you'll pay an extra fixed rate.
+  - Surplus vCPU usage credits charges when using [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html) (`t4g`, `t3a`, `t3` and `t2`) in unlimited mode (default). See [Burstable instance types](#burstable-instance-types).
 - Of course, if you use your AWS account for other things you need to account for them too, specially for [Always Free offers](#always-free-offers).
 
 ### 12-month Free Tier
@@ -330,12 +343,12 @@ But you must modify the [`servers.tf`](servers.tf) file to create your server. G
 
 You'll need to set these for each server you want to create.
 
-| Name       | Description                                                                                                                                                                               |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`       | Unique alphanumeric id for the server                                                                                                                                                     |
-| `game`     | The game this server is going to host. Valid values: `linuxgsm`, `minecraft`, `terraria`, `factorio`, `custom`. Read [LinuxGSM](#linuxgsm) and [Custom game](#custom-game) if applicable. |
-| `az`       | Which availability zone from the chosen region to place the server in.                                                                                                                    |
-| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required unless DDNS is `none`                                                                                                    |
+| Name       | Description                                                                                                                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`       | Unique alphanumeric id for the server                                                                                                                                                                   |
+| `game`     | The game this server is going to host. Valid values: `linuxgsm`, `minecraft`, `terraria`, `factorio`, `valheim` `custom`. **Read [LinuxGSM](#linuxgsm) and [Custom game](#custom-game) if applicable.** |
+| `az`       | Which availability zone from the chosen region to place the server in. It may be significant price-wise.                                                                                                |
+| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required unless DDNS is `none`                                                                                                                  |
 
 Some other variables may be required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 
@@ -783,7 +796,7 @@ You must run `terraform apply` again to apply the changes.
 ### LinuxGSM post-setup
 
 Please check your game specific post-setup documentation if available,
-but consider checking out [LinuxGSM own docs](https://docs.linuxgsm.com/game-servers) (left menu) which contains very useful information for some games.
+also consider checking out [LinuxGSM own docs](https://docs.linuxgsm.com/game-servers) (left menu) which contains very useful information for some games.
 
 As a general tip, your game data, saves and configurations files might be structured using different folder structure and file names than the ones used in game-specific docker images.
 
@@ -815,6 +828,22 @@ This project supports multiple AWS regions, so you can have a server in `us-east
 2. Replace `us-east-2` with the desired region in every occurance in the pasted code.
    This includes `alias` and `region`(s) attributes, `provider.aws` reference and `base_region` module name.
 3. Also change the `az` attribute to a valid AZ in the chosen region.
+
+#### Availability zones
+
+A server is constrained to one availability zone (AZ) due to EBS. You cannot change it after
+creation without losing data.
+
+You may want to place your server in a specific AZs which has lower price at the moment. Keep in mind the price
+still varies with time due to a number of factors.
+
+See Spot Instance pricing history in "AWS Console > EC2 > Instances > [Spot Requests](https://console.aws.amazon.com/ec2/home?region=us-east-2#SpotInstances:) > Pricing History",
+then choose the desired instance type or the default instance type in this project for the game you want.
+
+Check if this variation is significant and choose the current cheapest AZ for you.
+
+When choosing an specific AZ, don't forget to update the `azs` variable in the `base_region` module in [`servers.tf`](./servers.tf),
+and properly update all server module `az` variables in [`servers.tf`](./servers.tf).
 
 ### Server ports
 
@@ -903,9 +932,14 @@ To help choose a instance type different from the defaults, check out:
 
 Some examples of families you could choose: `r8g`, `m7a`, `m7g`, `c7g` and `c7a`.
 
-If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), check ["Things to keep in mind"](#things-to-keep-in-mind) in Cost breakdown
+#### Burstable instance types
 
-### Backups and deletion
+If you choose a burstable instance types (`t4g`, `t3a`, `t3` and `t2`), be aware of _surplus vCPU usage credits charges_ when using [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances.html) (`t4g`, `t3a`, `t3` and `t2`) in unlimited mode (default).
+See [Earn CPU credits](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html#earning-CPU-credits) and [When to use unlimited mode versus fixed CPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html#when-to-use-unlimited-mode).
+
+Make sure you have a good grasp of concepts such as unlimited vs fixed mode, vCPU credits, baseline performance, breakeven CPU usage and launch credits before choosing an instance of these families. They can be cheaper but if used wrong can incur an extra charges and end of up more expensive than fixed performance instance types.
+
+As a general tip, avoid `micro`, `small` and `medium` instances of these families because the baseline is too low for most games.
 
 #### Renaming and deleting
 

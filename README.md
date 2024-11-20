@@ -101,7 +101,7 @@ After setup, the process of starting and automatically stopping a game server wo
 8. The instance shutdown systemd timer starts checking if the container is running
 9. After a minute or so (depending on the game, instance, etc), the server is ready to connect and play
 10. After 10 minutes without a connection or after the last player disconnects, the server is shutdown automatically via the [Auto-stop feature](https://docker-minecraft-server.readthedocs.io/en/latest/misc/autopause-autostop/autostop/) (Minecraft) or a systemd service (other games).
-12. After a minute or so, the instance shutdown systemd timer/service notices that the container is stopped and shuts down the whole instance.
+11. After a minute or so, the instance shutdown systemd timer/service notices that the container is stopped and shuts down the whole instance.
 
 ### Diagram
 
@@ -352,217 +352,18 @@ You'll need to set these for each server you want to create.
 
 Some other variables may be required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 
+Please check if there is any "Terraform config" [Game specific notes](#game-specific-notes) for the game you chose, in case there is any extra Terraform variables you should set. (e.g server name and password via docker compose environment)
+
 Other "Common values" are also required but are the same between servers or/and regions. (you can just copy and paste them) See [Examples](#examples).
 
 #### Examples
 
-For a full example, check the [`servers.tf`](servers.tf) and [`regions.tf`](regions.tf) files themselves. See [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria/).
-
-<details>
-
-  <summary>Simple Minecraft server</summary>
-
-```tf
-module "example_server" {
-  id       = "ExampleVanilla"
-  game     = "minecraft"
-  az       = "us-east-2a"
-  hostname = "example.duckdns.org"
-
-  # ...
-  source = "./server"
-}
-```
-
-</details>
-
-<details>
-
-  <summary>Minecraft server with plugins, etc</summary>
-
-See https://docker-minecraft-server.readthedocs.io/en/latest/variables/
-
-```tf
-module "example_plugins" {
-  # Change these to desired values
-  id       = "ExamplePlugins"
-  game     = "minecraft"
-  hostname = "exampleplugins.duckdns.org"
-
-  instance_timezone = "America/Bahia"
-
-  main_port          = 34850
-  compose_game_ports = ["34850:25565", "24454:24454/udp"]
-  sg_ingress_rules = {
-    "Simple Voice Chat" : {
-      description = "Simple Voice Chat mod server"
-      from_port   = 24454
-      to_port     = 24454
-      ip_protocol = "udp"
-      cidr_ipv4   = "0.0.0.0/0"
-    }
-  }
-  compose_game_environment = {
-    "INIT_MEMORY" = "6100M"
-    "MAX_MEMORY"  = "6100M"
-
-    "ICON" = "https://picsum.photos/300/300"
-    "MOTD" = "     \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r \u00A75\u00A7lGame Server EC2 Discord\u00A7r \u00A7b\u00A7l\u00A7kaaaaaaaa\u00A7r"
-
-    "VERSION"     = "1.20.4"
-    "ONLINE_MODE" = false
-    # Tip: you may have eventual problems with auto-download/update if you add plugins this way
-    # you may comment them out later and/or add them manually via SSH
-    "PLUGINS"     = <<EOT
-https://cdn.modrinth.com/data/9eGKb6K1/versions/9yRemfrE/voicechat-bukkit-2.5.16.jar
-
-https://cdn.modrinth.com/data/UmLGoGij/versions/mr2CijyC/DiscordSRV-Build-1.27.0.jar
-
-https://cdn.modrinth.com/data/cUhi3iB2/versions/sOk0epGX/tabtps-spigot-1.3.24.jar
-
-https://cdn.modrinth.com/data/MubyTbnA/versions/vbGiEu4k/FreedomChat-Paper-1.6.0.jar
-https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.0.13/SkinsRestorer.jar
-
-https://download.luckperms.net/1544/bukkit/loader/LuckPerms-Bukkit-5.4.131.jar
-
-https://github.com/dmulloy2/ProtocolLib/releases/download/5.2.0/ProtocolLib.jar
-https://ci.codemc.io/job/AuthMe/job/AuthMeReloaded/2631/artifact/target/authme-5.7.0-SNAPSHOT.jar
-https://ci.codemc.io/job/Games647/job/FastLogin/1319/artifact/bukkit/target/FastLoginBukkit.jar
-EOT
-  }
-
-  compose_game_limits = {
-    memory = "7200mb"
-  }
-
-  # DDNS
-  duckdns_token = var.duckdns_token
-
-  # Region (change these to desired region)
-  base_region = module.region_us-east-2.base_region
-  providers   = { aws = aws.us-east-2 }
-  az          = "us-east-2a"
-
-  # ------------ Common values (just copy and paste) -------------
-  source                     = "./server"
-  iam_role_dlm_lifecycle_arn = module.global.iam_role_dlm_lifecycle_arn
-  # --------------------------------------------------------------
-}
-```
-
-</details>
-
-<details>
-  <summary>Factorio server via LinuxGSM</summary>
-
-```tf
-module "linuxgsm" {
-  # Change these to desired values
-  id       = "FactorioExample"
-  game     = "linuxgsm"
-  hostname = "example-fctr.duckdns.org"
-
-  linuxgsm_game_shortname = "fctr"
-
-  instance_type     = "m7a.medium"
-  arch              = "x86_64"
-
-  main_port          = 34197
-  compose_game_ports = ["34197:34197", "34197:34197/udp"]
-  data_volume_size   = 2
-
-  # DDNS
-  duckdns_token = var.duckdns_token
-
-  # Region (change these to desired region)
-  base_region = module.region_us-east-2.base_region
-  providers   = { aws = aws.us-east-2 }
-  az          = "us-east-2a"
-
-  # ------------ Common values (just copy and paste) -------------
-  source                     = "./server"
-  iam_role_dlm_lifecycle_arn = module.global.iam_role_dlm_lifecycle_arn
-  # --------------------------------------------------------------
-}
-
-```
-
-</details>
-
-<details>
-
-  <summary>Valheim server</summary>
-
-```tf
-module "valheim" {
-  id       = "GSEDValheimExample"
-  game     = "valheim"
-  hostname = "valheim-example.duckdns.org"
-
-  compose_game_environment = {
-    "NAME" : "My GSED Valheim Server",
-    "PASSWORD" : "friendsonly"
-    "WEBHOOK_URL" : "https://discord.com/api/webhooks/.../..." # optional
-  }
-
-  # DDNS
-  duckdns_token = var.duckdns_token
-
-  # Region (change these to desired region)
-  base_region = module.region_us-east-2.base_region
-  providers   = { aws = aws.us-east-2 }
-  az          = "us-east-2a"
-
-  # ------------ Common values (just copy and paste) -------------
-  source                     = "./server"
-  iam_role_dlm_lifecycle_arn = module.global.iam_role_dlm_lifecycle_arn
-  # --------------------------------------------------------------
-}
-```
-
-</details>
-
-<details>
-
-  <summary>One server in each region</summary>
-
-</details>
-
-<details>
-
-  <summary>Custom game</summary>
-
-Creating a TShock Terraria server using the `custom` game option.
-See [ryshe/terraria](https://hub.docker.com/r/ryshe/terraria/).
-
-```tf
-module "terraria" {
-  # Change these to desired values
-  id               = "CustomExample"
-  game             = "custom"
-  custom_game_name = "Terraria"
-  hostname         = "gsed-example.duckdns.org"
-
-  instance_type    = "m7g.medium"
-  arch             = "arm64"
-  data_volume_size = 1
-
-  main_port = 7777
-  compose_services = {
-    main : {
-      image : "ryshe/terraria"
-      ports : ["7777:7777"]
-      command : "-world ${local.terraria_workdir_path}/Worlds/CustomExample.wld -autocreate 3"
-      volumes : ["/srv/terraria:${local.terraria_workdir_path}"]
-    }
-  }
-
-  // ...
-  source = "./server"
-}
-```
-
-</details>
+- [Custom server](./examples/custom.tf)
+- [Factorio server via LinuxGSM](./examples/linuxgsm_factorio.tf.tf)
+- [Minecraft server](./examples/minecraft.tf)
+- [Minecraft server with plugins, etc](./examples/minecraft_full.tf)
+- [Palworld](./examples/palworld.tf)
+- [Valheim](./examples/valheim.tf)
 
 ### Applying
 
@@ -741,7 +542,7 @@ You should at least set up a server password so only you and your friends can jo
 2. Edit the file at `/srv/terraria/data/config.json`
    - You may need to use `sudo` to edit the file. (e.g `sudo nano /srv/terraria/data/config.json`)
 3. Set a password in the `Settings.ServerPassword` field
-4. Restart the server by running `docker compose restart terraria-terraria-1` or by restarting the whole instance.
+4. Restart the server by running `docker compose restart terraria-terraria-1` or by restarting the whole instance via AWS Console or Discord `/restart` slash command.
 
 See also TShock [Config Settings](https://tshock.readme.io/docs/config-settings) and [Setting Up Your Server](https://tshock.readme.io/docs/setting-up-your-server).
 
@@ -780,13 +581,43 @@ In there you should at least set up a server password (different from admin pass
 <details>
   <summary>Valheim</summary>
 
-### Valheim post-setup
+### Valheim Terraform config
 
 By default, the server is created with a password of `valheim` and should be visible in the server list depending on your region. (default server name is the server Terraform module id)
 
-You may change the server password, among [other things](https://github.com/mbround18/valheim-docker?tab=readme-ov-file#environment-variables) such as server name via the `compose_game_environment` server module Terraform variable. See "Valheim server" in [Examples](#examples)
+You may change the server password, among [other things](https://github.com/mbround18/valheim-docker?tab=readme-ov-file#environment-variables) such as server name via the `compose_game_environment` server module Terraform variable.
 
-You must run `terraform apply` again to apply the changes.
+```tf
+  compose_game_environment = {
+    "NAME" : "My GSED Valheim Server",
+    "PASSWORD" : "friendsonly"
+  }
+```
+
+See "Valheim server" in [Examples](#examples).
+
+</details>
+
+<details>
+  <summary>Palworld</summary>
+
+### Palworld Terraform config
+
+By default, the server is created with a password of `palworld`, admin password `worldofpalsadmin` and visible in the server list. (default server name is the server Terraform module id)
+
+You may change the server and admin password, among [other things](https://palworld-server-docker.loef.dev/category/configuration) such as server name via the `compose_game_environment` server module Terraform variable.
+
+```tf
+  compose_game_environment = {
+    "SERVER_NAME" : "My GSED Palworld server"
+    "SERVER_DESCRIPTION" : "Welcome to my server"
+    "SERVER_PASSWORD" : "palpalpal"
+    "ADMIN_PASSWORD" : "worldworld",
+    "COMMUNITY" : false # hide server from community list
+  }
+```
+
+See "Palworld server" in [Examples](#examples).
 
 </details>
 
@@ -920,6 +751,7 @@ When choosing an EC2 instance type, consider:
 - [Instance generation](https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html) (newer generations are more performant)
 - Spot price and price history
 - Spot interruption frequency (if it's too high there's more chance per month of the server going down while you're playing)
+- Some instance families are not available in all regions
 
 To help choose a instance type different from the defaults, check out:
 
@@ -930,7 +762,10 @@ To help choose a instance type different from the defaults, check out:
 - [Spot Instance advisor](https://aws.amazon.com/ec2/spot/instance-advisor/) - Official way to check spot interruption frequency
 - [aws-pricing.com Instance Picker](https://aws-pricing.com/picker.html) - Similar to Vantage
 
-Some examples of families you could choose: `r8g`, `m7a`, `m7g`, `c7g` and `c7a`.
+Some examples of families you could choose:
+
+- x86_64: `r7a`, `r7i`, `c7a`, `c7i`, `m7a`, `r7iz`
+- arm64: `r8g`, `c8g`, `m8g`, `r7g`, `c7g`, `m7g`
 
 #### Burstable instance types
 
@@ -968,7 +803,7 @@ Here's the _additional_ variables you must to specify in the [`servers.tf`](./se
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | game                    | Must be `linuxgsm`                                                                                                                                                                                |
 | linuxgsm_game_shortname | The "shortname" of the desired game, found in LinuxGSM's **[server list](https://github.com/GameServerManagers/LinuxGSM/blob/72deed15a68c95765b9a18dad68d15494d644781/lgsm/data/serverlist.csv)** |
-| instance_type           | The EC2 instance type. See [Server instance type](#server-instance-type)                                                                                                                          |
+| instance_type           | The EC2 instance type. The instance must be powerful enough to run your chosen game server. See [Server instance type](#server-instance-type)                                                     |
 | arch                    | The architecture of the chosen EC2 instance type (`arm64` or `x86_64`). Some games do not support `arm64`. See also [server/main.tf](./server/main.tf)                                            |
 | main_port               | Main port for server connections. If the game requires more than one port, see [Server ports](#server-ports)                                                                                      |
 | data_volume_size        | The required storage in GB by the game data + save files, it varies greatly from game to game. See [server/main.tf](./server/main.tf) for some examples.                                          |

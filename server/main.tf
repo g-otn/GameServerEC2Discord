@@ -18,6 +18,17 @@ locals {
 
   data_mount_path     = "/srv/${var.game == "custom" ? lower(var.custom_game_name) : var.game}"
   data_subfolder_path = "${local.data_mount_path}/data"
+
+  game = local.game_defaults_map[var.game]
+
+  compose = merge({
+    services : merge({
+      "${local.game.compose_main_service_name}" : merge(local.main_service_map[var.game], var.compose_game_elements)
+    }, var.compose_services)
+  }, var.compose_top_level_elements)
+
+  compose_file_content_b64 = base64encode(yamlencode(local.compose))
+
   game_defaults_map = {
     minecraft = {
       game_name                 = "Minecraft"
@@ -69,7 +80,7 @@ locals {
       main_port                 = coalesce(var.main_port, 2456)
       sg_ingress_rules = {
         "extra_1" : {
-          description = "Valheim required ports 2457-2458 UDP"
+          description = "Valheim extra required ports"
           from_port   = 2457
           to_port     = 2458
           ip_protocol = "udp"
@@ -78,6 +89,32 @@ locals {
       }
       watch_connections = coalesce(var.watch_connections, true)
     }
+    palword = {
+      game_name                 = "Palworld"
+      instance_type             = coalesce(var.instance_type, "m8g.xlarge")
+      arch                      = coalesce(var.arch, "arm64")
+      data_volume_size          = coalesce(var.data_volume_size, 10)
+      compose_main_service_name = "palworld"
+      main_port                 = coalesce(var.main_port, 8211)
+      sg_ingress_rules = {
+        "rest_api" : {
+          description = "Palworld REST API"
+          from_port   = 8212
+          to_port     = 8212
+          ip_protocol = "udp"
+          cidr_ipv4   = "0.0.0.0/0"
+        }
+        "query" : {
+          description = "Palworld Query"
+          from_port   = 27015
+          to_port     = 27015
+          ip_protocol = "udp"
+          cidr_ipv4   = "0.0.0.0/0"
+        }
+      }
+      watch_connections = coalesce(var.watch_connections, true)
+    }
+
     linuxgsm = {
       game_name                 = "LinuxGSM"
       instance_type             = var.instance_type
@@ -99,14 +136,6 @@ locals {
       watch_connections         = coalesce(var.watch_connections, true)
     }
   }
-  game = local.game_defaults_map[var.game]
-
-  compose = merge({
-    services : merge({
-      "${local.game.compose_main_service_name}" : merge(local.main_service_map[var.game], var.compose_game_elements)
-    }, var.compose_services)
-  }, var.compose_top_level_elements)
-  compose_file_content_b64 = base64encode(yamlencode(local.compose))
 
   main_service_map = {
     // https://docker-minecraft-server.readthedocs.io/en/latest/#using-docker-compose
@@ -115,7 +144,7 @@ locals {
       image : "itzg/minecraft-server",
       tty : true,
       stdin_open : true,
-      ports : coalesce(var.compose_game_ports, ["25565:25565"]),
+      ports : concat(["25565:25565"], coalesce(var.compose_game_ports, []))
       environment : merge({
         // https://docker-minecraft-server.readthedocs.io/en/latest/variables
         EULA : true,
@@ -151,7 +180,7 @@ locals {
     terraria = {
       container_name : "terraria",
       image : "ryshe/terraria",
-      ports : coalesce(var.compose_game_ports, ["7777:7777"]),
+      ports : concat(["7777:7777"], coalesce(var.compose_game_ports, []))
       environment : merge({}, var.compose_game_environment)
       command : "-world /root/.local/share/Terraria/Worlds/${var.id}.wld -autocreate ${var.terraria_world_size}"
       volumes : [
@@ -164,7 +193,7 @@ locals {
     factorio = {
       container_name : "factorio",
       image : "factoriotools/factorio:stable",
-      ports : coalesce(var.compose_game_ports, ["34197:34197/udp"]),
+      ports : concat(["34197:34197/udp"], coalesce(var.compose_game_ports, []))
       environment : merge({}, var.compose_game_environment)
       volumes : [
         "${local.data_subfolder_path}:/factorio",
@@ -176,7 +205,7 @@ locals {
     satisfactory = {
       container_name : "satisfactory",
       image : "wolveix/satisfactory-server",
-      ports : coalesce(var.compose_game_ports, ["7777:7777/tcp", "7777:7777/udp"]),
+      ports : concat(["7777:7777/tcp", "7777:7777/udp"], coalesce(var.compose_game_ports, []))
       environment : merge({
         "MAXPLAYERS" : 4
         "PGID" : 1000
@@ -201,7 +230,7 @@ locals {
     valheim = {
       container_name : "valheim",
       image : "mbround18/valheim:latest",
-      ports : coalesce(var.compose_game_ports, ["2456-2458:2456-2458/udp"]),
+      ports : concat(["2456-2458:2456-2458/udp"], coalesce(var.compose_game_ports, []))
       environment : merge(
         {
           PORT : 2456
@@ -223,6 +252,36 @@ locals {
         "${local.data_mount_path}/server:/home/steam/valheim",
       ]
       cap_add : ["SYS_NICE"]
+      restart : "no"
+      stop_grace_period : "2m"
+    }
+
+    palword = {
+      container_name : "palworld",
+      image : "thijsvanloef/palworld-server-docker"
+      ports : concat(["8211:8211/udp", "8212:8212/tcp", "27015:27015/udp"], coalesce(var.compose_game_ports, []))
+      environment : merge(
+        {
+          PUID : 1000
+          PGID : 1000
+          PORT : 8211  # Optional but recommended
+          PLAYERS : 16 # Optional but recommended
+          SERVER_PASSWORD : "palworld"
+          MULTITHREADING : true
+          ADMIN_PASSWORD : "worldofpalsadmin"
+          COMMUNITY : true # Enable this if you want your server to show up in the community servers tab, USE WITH SERVER_PASSWORD!
+          SERVER_NAME : var.id
+          SERVER_DESCRIPTION : "${var.id} Palworld Server"
+          BACKUP_ENABLED : true
+          BACKUP_CRON_EXPRESSION : "0 * * * *"
+          DELETE_OLD_BACKUPS : true
+        },
+        var.instance_timezone != null ? { TZ : var.instance_timezone } : {},
+        var.compose_game_environment
+      )
+      volumes : [
+        "${local.data_subfolder_path}:/palworld"
+      ]
       restart : "no"
       stop_grace_period : "2m"
     }

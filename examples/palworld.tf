@@ -6,15 +6,14 @@
 
 module "GSEDPalworldExample" {
   id       = "GSEDPalworldExample"
-  game     = "palword"
-  hostname = "palword-example.duckdns.org"
+  game     = "palworld"
+  hostname = "palworld-example.duckdns.org"
 
   compose_game_environment = {
     "SERVER_NAME" : "My GSED Palworld server"
     "SERVER_DESCRIPTION" : "Welcome to my server"
     "SERVER_PASSWORD" : "palpalpal"
-    "ADMIN_PASSWORD" : "worldworld",
-    "COMMUNITY" : false                                                # hide server from community list
+    "ADMIN_PASSWORD" : "worldworld",                                   # hide server from community list
     "DISCORD_WEBHOOK_URL" : "https://discord.com/api/webhooks/.../..." # optional
   }
 

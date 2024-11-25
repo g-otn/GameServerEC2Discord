@@ -60,10 +60,13 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 - Factorio (via [factoriotools/factorio](https://github.com/factoriotools/factorio-docker))
 - Satisfactory (via [wolveix/satisfactory-server](https://github.com/wolveix/satisfactory-server))
 - Valheim (via [mbround18/valheim-docker](https://github.com/mbround18/valheim-docker))
+- Palworld (via [thijsvanloef/palworld-server-docker](https://github.com/thijsvanloef/palworld-server-docker))
 
 **LinuxGSM**
 
-- All above, Palworld, ARK: Survival Evolved and [**many more**](https://linuxgsm.com/servers/) should be supported via [LinuxGSM](https://hub.docker.com/r/gameservermanagers/gameserver)
+- All above, Rust, 7 Days to Die and [**many more**](https://linuxgsm.com/servers/) should be supported via [LinuxGSM](https://hub.docker.com/r/gameservermanagers/gameserver).
+
+LinuxGSM is a deployment and managment tool for Linux dedicated game servers.
 
 _Not all games supported by LinuxGSM have been tested with this project._ See also [usage stats](https://linuxgsm.com/data/usage/).
 
@@ -121,17 +124,18 @@ Minecraft:
 
 Assuming one server and AWS free tier/offers:
 
-- Minecraft: **~0.7 USD for 30h of gameplay** using 1x 2.7GHz vCPU and 8GB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
-- Terraria: **~0.5 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
-- Factorio: **~0.7 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 4GB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=ff82441ec0eea51961558a2d6a5424d1422599cc))
-- Satisfactory: **~0.9 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 8GB of DDR5 RAM ([estimate]())
-- Valheim: **~1 USD for 30h of gameplay** using 2x 3.2 GHz vCPU and 4GB of DDR5 RAM ([estimate]())
+- Minecraft: **~0.7 USD for 30h of gameplay** using 1x 2.7GHz vCPU and 8GiB DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=dc1445d2100ca6e1e362c332bc2f88ee2b600104))
+- Terraria: **~0.5 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 4GiB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=f63634222b52545ef1230d16f4f21500cae14ff0))
+- Factorio: **~0.7 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 4GiB of DDR5 RAM ([estimate](https://calculator.aws/#/estimate?id=ff82441ec0eea51961558a2d6a5424d1422599cc))
+- Satisfactory: **~0.9 USD for 30h of gameplay** using 1x 3.7 GHz vCPU and 8GiB of DDR5 RAM ([estimate]())
+- Valheim: **~1 USD for 30h of gameplay** using 2x 3.2 GHz vCPU and 4GiB of DDR5 RAM ([estimate]())
+- Palworld: **~2.5 USD for 30h of gameplay** using 4x 3.2 GHz vCPU and 8GiB of DD5 RAM ([estimate]())
 
 AWS Pricing Calculator estimates do not include Public IP cost, see tables below.
 
 ### Notable expenses
 
-Again, these are just estimates.
+Again, these are just estimates and EC2 pricing varies with time due to a [number of factors](#things-to-keep-in-mind).
 
 - ☑️ - Covered by **12**-month **F**ree **T**ier (assuming one server)
 - ✅ - Covered by monthly **A**lways **F**ree offers (assuming one server)
@@ -142,7 +146,7 @@ Again, these are just estimates.
 | 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
 | ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
 |      |     | EC2     | [`r8g.medium`](https://instances.vantage.sh/aws/ec2/r8g.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=r8g.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.022     | $0.66        | $0.66                            |                                               |
-| ☑️   |     | EBS     | 4GB root volume + 5GB game data volume                                                                                                                                                                        | -          | ~$0.72       | -                                | ~$0.72                                        |
+| ☑️   |     | EBS     | 4GB root volume + 5GB game data volume                                                                                                                                                                        | -          | $0.72        | -                                | $0.72                                         |
 |      |     | EBS     | (Optional) Snapshots of 5GB game data volume                                                                                                                                                                  | -          | ~$0.25       |                                  | ~$0.25                                        |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
@@ -156,7 +160,7 @@ Again, these are just estimates.
 | 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
 | ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
 |      |     | EC2     | [`m8g.medium`](https://instances.vantage.sh/aws/ec2/m8g.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m8g.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.015     | $0.45        | $0.45                            |                                               |
-| ☑️   |     | EBS     | 4GB root volume + 1GB game data volume                                                                                                                                                                        | -          | ~$0.4        | -                                | ~$0.4                                         |
+| ☑️   |     | EBS     | 4GB root volume + 1GB game data volume                                                                                                                                                                        | -          | $0.4         | -                                | $0.4                                          |
 | ☑️   |     | EBS     | (Optional) Snapshots of 1GB game data volume                                                                                                                                                                  | -          | ~$0.05       |                                  | ~$0.05                                        |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
@@ -170,7 +174,7 @@ Again, these are just estimates.
 | 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
 | ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
 |      |     | EC2     | [`m7a.medium`](https://instances.vantage.sh/aws/ec2/m7a.medium?min_memory=4&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=m7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.021     | $0.63        | $0.63                            |                                               |
-| ☑️   |     | EBS     | 4GB root volume + 2GB game data volume                                                                                                                                                                        | -          | ~$0.48       | -                                | ~$0.48                                        |
+| ☑️   |     | EBS     | 4GB root volume + 2GB game data volume                                                                                                                                                                        | -          | $0.48        | -                                | $0.48                                         |
 |      |     | EBS     | (Optional) Snapshots of 2GB game data volume                                                                                                                                                                  | -          | ~$0.1        |                                  | ~$0.1                                         |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
@@ -184,7 +188,7 @@ Again, these are just estimates.
 | 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                     | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
 | ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
 |      |     | EC2     | [`r7a.medium`](https://instances.vantage.sh/aws/ec2/r7a.medium?min_memory=8&min_vcpus=1&region=us-east-2&cost_duration=daily&selected=r7a.medium&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.028     | $0.84        | $0.84                            |                                               |
-| ☑️   |     | EBS     | 4GB root volume + 6GB game data volume                                                                                                                                                                        | -          | ~$0.8        | -                                | ~$0.48                                        |
+| ☑️   |     | EBS     | 4GB root volume + 6GB game data volume                                                                                                                                                                        | -          | $0.8         | -                                | $0.48                                         |
 |      |     | EBS     | (Optional) Snapshots of 6GB game data volume                                                                                                                                                                  | -          | ~$0.3        |                                  | ~$0.3                                         |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                             | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                      | $0.003     | $0.9         | -                                |                                               |
@@ -198,11 +202,25 @@ Again, these are just estimates.
 | 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                  | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
 | ---- | --- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
 |      |     | EC2     | [`c7i.large`](https://instances.vantage.sh/aws/ec2/c7i.large?min_memory=2&min_vcpus=2&region=us-east-2&cost_duration=daily&selected=c7i.large&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.031     | $0.93        | $0.93                            |                                               |
-| ☑️   |     | EBS     | 4GB root volume + 6GB game data volume                                                                                                                                                                     | -          | ~$0.8        | -                                | ~$0.48                                        |
+| ☑️   |     | EBS     | 4GB root volume + 6GB game data volume                                                                                                                                                                     | -          | $0.8         | -                                | $0.48                                         |
 |      |     | EBS     | (Optional) Snapshots of 6GB game data volume                                                                                                                                                               | -          | ~$0.3        |                                  | ~$0.3                                         |
 | ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                          | $0.005     | $0.15        | -                                |                                               |
 |      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                   | $0.003     | $0.9         | -                                |                                               |
 |      |     |         | **Total**                                                                                                                                                                                                  | $0.12      | **$3.08**    | **$0.93**                        | **$0.78**                                     |
+
+</details>
+
+<details>
+  <summary><b>Palworld</b></summary>
+
+| 12FT | AF  | Service | Sub-service / description                                                                                                                                                                                                 | Price/hour | Price 30h/mo | Price 30h/mo w/ free tier/offers | Price 0h/mo (not in use, no free tier/offers) |
+| ---- | --- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | -------------------------------- | --------------------------------------------- |
+|      |     | EC2     | [`c7i-flex.large`](https://instances.vantage.sh/aws/ec2/c7i-flex.large?min_memory=8&min_vcpus=2&region=us-east-2&cost_duration=daily&selected=c7i-flex.large&os=linux&reserved_term=Standard.noUpfront) **spot** instance | $0.08      | $2.4         | $2.4                             |                                               |
+| ☑️   |     | EBS     | 4GB root volume + 6GB game data volume                                                                                                                                                                                    | -          | $0.8         | -                                | $0.8                                          |
+|      |     | EBS     | (Optional) Snapshots of 6GB game data volume                                                                                                                                                                              | -          | ~$0.3        |                                  | ~$0.3                                         |
+| ☑️   |     | VPC     | [Public IPv4 address](https://aws.amazon.com/pt/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)                                                                                                         | $0.005     | $0.15        | -                                |                                               |
+|      | ✅  | VPC     | ~10GB of outbound network data (example)                                                                                                                                                                                  | $0.003     | $0.9         | -                                |                                               |
+|      |     |         | **Total**                                                                                                                                                                                                                 | $0.12      | **$4.55**    | **$2.4**                         | **$1.1**                                      |
 
 </details>
 
@@ -249,7 +267,8 @@ Otherwise due to the current [price rates](https://aws.amazon.com/ec2/pricing/on
 
 **You have to keep this in mind** if you're creating more than a couple of servers, or download something big from a server while it's running. (e.g downloading large save files to sync multiplayer session)
 
-> [!TIP] If necessary, you could pay attention to individual player network download metrics (e.g 20kb/s), and then calculate how much will be used per 30h of gameplay.
+> [!TIP]
+> If necessary, you could pay attention to individual player network download metrics (e.g 20kb/s), and then calculate how much will be used per 30h of gameplay.
 
 **Misc**
 
@@ -261,7 +280,7 @@ Lambda; SNS; KMS; CloudWatch / X-Ray; Data transfer between regions (i.e from La
 ## Prerequisites
 
 - Basic Terraform, Linux and SSH usage knowledge
-  - Dedicated server setup knowledge (updating configurations, uploading saves, etc)
+  - Dedicated game server setup knowledge (updating configurations, uploading saves, etc)
 - An [AWS account](https://portal.aws.amazon.com/billing/signup)
   - AWS credentials allowing Terraform to create resources on your account ([example](https://www.youtube.com/watch?v=eupw9OP14z8))
 - An Discord app on the [Developer portal](https://discord.com/developers/applications)
@@ -343,12 +362,12 @@ But you must modify the [`servers.tf`](servers.tf) file to create your server. G
 
 You'll need to set these for each server you want to create.
 
-| Name       | Description                                                                                                                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`       | Unique alphanumeric id for the server                                                                                                                                                                   |
-| `game`     | The game this server is going to host. Valid values: `linuxgsm`, `minecraft`, `terraria`, `factorio`, `valheim` `custom`. **Read [LinuxGSM](#linuxgsm) and [Custom game](#custom-game) if applicable.** |
-| `az`       | Which availability zone from the chosen region to place the server in. It may be significant price-wise.                                                                                                |
-| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required unless DDNS is `none`                                                                                                                  |
+| Name       | Description                                                                                                                                                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`       | Unique alphanumeric id for the server                                                                                                                                                                               |
+| `game`     | The game this server is going to host. Valid values: `linuxgsm`, `minecraft`, `terraria`, `factorio`, `valheim`, `palworld`, `custom`. **Read [LinuxGSM](#linuxgsm) or [Custom game](#custom-game) if applicable.** |
+| `az`       | Which availability zone from the chosen region to place the server in. It may be significant price-wise.                                                                                                            |
+| `hostname` | Full hostname to be used. (e.g "myserver.duckdns.org"). Required unless DDNS is `none`                                                                                                                              |
 
 Some other variables may be required depending of the values of specific variables. Please check the [`server/variables.tf`](server/variables.tf) file.
 
@@ -497,7 +516,7 @@ You should at least set up a whitelist so only your friends can join the server.
 You can do that by op-ing yourself by creating an whitelist on the Minecraft server console.
 
 1. Connect to your running server instance using SSH (See [SSH](#ssh))
-2. Attach your terminal to the Minecraft server terminal by running `docker attach minecraft-mc-1`
+2. Attach your terminal to the Minecraft server terminal by running `docker attach minecraft`
 3. Run `whitelist add <player name>` to whitelist someone. You could also give yourself admin using `op <your player name>` to run more commands from within your game chat.
 
 If you're running an offline server, you could also consider setup an auth plugin such as [AuthMeReloaded](https://www.spigotmc.org/resources/authmereloaded.6269/) (Spigot).
@@ -605,7 +624,7 @@ See "Valheim server" in [Examples](#examples).
 
 By default, the server is created with a password of `palworld`, admin password `worldofpalsadmin` and visible in the server list. (default server name is the server Terraform module id)
 
-You may change the server and admin password, among [other things](https://palworld-server-docker.loef.dev/category/configuration) such as server name via the `compose_game_environment` server module Terraform variable.
+You may change the server and admin password, among [other things](https://palworld-server-docker.loef.dev/category/configuration) such as server name via the `compose_game_environment` server module Terraform variable:
 
 ```tf
   compose_game_environment = {
@@ -618,6 +637,14 @@ You may change the server and admin password, among [other things](https://palwo
 ```
 
 See "Palworld server" in [Examples](#examples).
+
+> [!IMPORTANT]
+> If you choose an `arm64` instance architecture, you'll probably have to set `USE_DEPOT_DOWNLOADER` `compose_game_environment` variable to `true`, to avoid
+> [this error](https://palworld-server-docker.loef.dev/known-issues#usrlocalbinbox86-cannot-execute-binary-file-exec-format-error-arm64-hosts).
+>
+> However, you then may still encounter another error related to Linux file permissions: `./PalServer.sh is not executable.` and the server won't start.
+> This seems like a [problem with DepotDownloader](https://github.com/SteamRE/DepotDownloader/issues/448).
+> To work around this, SSH into your instance and manually make the file executable. (i.e `chmod +x /srv/palworld/data/PalServer.sh`)
 
 </details>
 
@@ -662,19 +689,20 @@ This project supports multiple AWS regions, so you can have a server in `us-east
 
 #### Availability zones
 
-A server is constrained to one availability zone (AZ) due to EBS. You cannot change it after
-creation without losing data.
+A server is constrained to one availability zone (AZ) due to EBS (storage). You cannot change it after
+creation without recreating it and losing data.
 
-You may want to place your server in a specific AZs which has lower price at the moment. Keep in mind the price
-still varies with time due to a number of factors.
+The reason you may want to choose a specific AZ is due to price difference between AZs in the region.
+It's worth checking because the price diference can
+be significant! Keep in mind EC2 pricing still varies with time due to a [number of other factors](#things-to-keep-in-mind).
 
 See Spot Instance pricing history in "AWS Console > EC2 > Instances > [Spot Requests](https://console.aws.amazon.com/ec2/home?region=us-east-2#SpotInstances:) > Pricing History",
 then choose the desired instance type or the default instance type in this project for the game you want.
 
 Check if this variation is significant and choose the current cheapest AZ for you.
 
-When choosing an specific AZ, don't forget to update the `azs` variable in the `base_region` module in [`servers.tf`](./servers.tf),
-and properly update all server module `az` variables in [`servers.tf`](./servers.tf).
+When choosing an specific AZ, don't forget to update the `azs` variable in the `base_region` module in [`servers.tf`](./servers.tf) if necessary,
+and then properly update all server module `az` variables in [`servers.tf`](./servers.tf).
 
 ### Server ports
 
@@ -747,11 +775,12 @@ When choosing an EC2 instance type, consider:
 - CPU architecture (e.g `arm64` are generally cheaper but some games don't support it)
 - Available vCPU and RAM (based on game server requirements)
   - Keep in mind some of the server resources are used for the OS, Docker, etc and are not available to the game server itself. For example a 8GB instance might have ~6.5GB available
-- System single-core and multi-core [performance scores](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2)
+- CPU frequency (GHz) / System single-core and multi-core [performance scores](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2)
 - [Instance generation](https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html) (newer generations are more performant)
 - Spot price and price history
+  - Sometimes, for some reason, the instance type is significally cheaper or more expensive in a specific availability zone than the others. See [Availability Zones](#availability-zones).
 - Spot interruption frequency (if it's too high there's more chance per month of the server going down while you're playing)
-- Some instance families are not available in all regions
+- Some instance families are not available in most regions
 
 To help choose a instance type different from the defaults, check out:
 
@@ -764,7 +793,7 @@ To help choose a instance type different from the defaults, check out:
 
 Some examples of families you could choose:
 
-- x86_64: `r7a`, `r7i`, `c7a`, `c7i`, `m7a`, `r7iz`
+- x86_64: `r7a`, `r7i`, `c7a`, `c7i-flex`, `c7i`, `m7a`, `r7iz`
 - arm64: `r8g`, `c8g`, `m8g`, `r7g`, `c7g`, `m7g`
 
 #### Burstable instance types
@@ -876,14 +905,14 @@ These notes and commands are for when you are connected to the instance via SSH.
 
 Game data EBS volume is mounted at `/srv/<game id>` (e.g `/srv/minecraft`);
 
-Docker compose container name is `<game id>-<game main service name>-1` (e.g `minecraft-mc-1`)
+Docker compose container name is `<game id>-<game main service name>-1` (e.g `minecraft`)
 
 Commands (using Minecraft server as an example):
 
 - `htop`: Task manager / resource usage viewer
 - `docker stats`: Shows current RAM usage vs deploy limit
-- [`docker attach minecraft-mc-1`](https://docker-minecraft-server.readthedocs.io/en/latest/commands/#enabling-interactive-console): (Minecraft only) Attach terminal to Minecraft server console
-- `docker logs minecraft-mc-1 -f`: Latest logs from the container
+- [`docker attach minecraft](https://docker-minecraft-server.readthedocs.io/en/latest/commands/#enabling-interactive-console): (Minecraft only) Attach terminal to Minecraft server console
+- `docker logs minecraft -f`: Latest logs from the container
 - `sudo systemctl stop auto_shutdown.timer`: Stops the systemd timer which prevents the instance from being shut down automatically until next reboot. Don't forget to shutdown/reboot manually or start the timer again!
 - `sudo conntrack -L --dst-nat | grep -w <game main port> | grep -w ESTABLISHED`: Lists currently estabilished network connections with the container
 

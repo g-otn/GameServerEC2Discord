@@ -89,11 +89,11 @@ locals {
       }
       watch_connections = coalesce(var.watch_connections, true)
     }
-    palword = {
+    palworld = {
       game_name                 = "Palworld"
-      instance_type             = coalesce(var.instance_type, "m8g.xlarge")
-      arch                      = coalesce(var.arch, "arm64")
-      data_volume_size          = coalesce(var.data_volume_size, 10)
+      instance_type             = coalesce(var.instance_type, "c7i-flex.xlarge")
+      arch                      = coalesce(var.arch, "x86_64")
+      data_volume_size          = coalesce(var.data_volume_size, 6)
       compose_main_service_name = "palworld"
       main_port                 = coalesce(var.main_port, 8211)
       sg_ingress_rules = {
@@ -256,16 +256,17 @@ locals {
       stop_grace_period : "2m"
     }
 
-    palword = {
+    palworld = {
       container_name : "palworld",
       image : "thijsvanloef/palworld-server-docker"
       ports : concat(["8211:8211/udp", "8212:8212/tcp", "27015:27015/udp"], coalesce(var.compose_game_ports, []))
       environment : merge(
         {
+          # USE_DEPOT_DOWNLOADER : true // For arm64 instances
           PUID : 1000
           PGID : 1000
-          PORT : 8211  # Optional but recommended
-          PLAYERS : 16 # Optional but recommended
+          PORT : 8211 # Optional but recommended
+          PLAYERS : 6 # Optional but recommended
           SERVER_PASSWORD : "palworld"
           MULTITHREADING : true
           ADMIN_PASSWORD : "worldofpalsadmin"

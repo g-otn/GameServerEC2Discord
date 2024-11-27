@@ -29,6 +29,11 @@ locals {
 
   compose_file_content_b64 = base64encode(yamlencode(local.compose))
 
+
+  # ----------------------------------------------------------------
+  # Default server values for each game
+  # ----------------------------------------------------------------
+
   game_defaults_map = {
     minecraft = {
       game_name                 = "Minecraft"
@@ -136,6 +141,10 @@ locals {
       watch_connections         = coalesce(var.watch_connections, true)
     }
   }
+
+  # ----------------------------------------------------------------
+  # Default docker compose service for each game
+  # ----------------------------------------------------------------
 
   main_service_map = {
     // https://docker-minecraft-server.readthedocs.io/en/latest/#using-docker-compose

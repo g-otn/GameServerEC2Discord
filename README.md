@@ -2,7 +2,7 @@
 
 Terraform files to manage cheap EC2 Spot instances to host game servers controlled by Discord chat.
 
-Made for and tested with personal and small servers with few players.
+Made for and tested with private small servers with few players.
 
 https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 

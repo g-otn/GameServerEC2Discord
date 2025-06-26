@@ -393,9 +393,6 @@ Other "Common values" are also required but are the same between servers or/and 
 If the server is not acessible try connecting into the instance, disabling auto shutdown and check logs for errors.
 See [Useful info and commands](#useful-info-and-commands).
 
-> [!NOTE]  
-> For extra security, SSH-ing and ICMP pinging the instances are only accepted from IPv4 where the Terraform config was applied (e.g your computer). This means once your IPv4 changes, you must run `terraform apply` again to update the security groups rules, or do it manually. Otherwise you won't be able to ping / SSH.
-
 </details>
 
 ### (Recommended) Discord interactions

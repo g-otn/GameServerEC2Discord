@@ -882,6 +882,7 @@ To define a custom game server (see also custom game [example](#examples)):
 You most likely will want to SSH into your instance at least once to maybe upload an existing save / world or to modify server configuration.
 
 I recommend using some UI application to help navigate and manage files via SSH like [VS Code Remote Explorer](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-explorer).
+Consider also using a SFTP client.
 
 SSH into your instance using the `ec2-user` user. Example:
 

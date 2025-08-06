@@ -68,7 +68,8 @@ https://github.com/user-attachments/assets/e2e63d59-3a4e-4aaa-8513-30243aafa6c4
 
 LinuxGSM is a deployment and managment tool for Linux dedicated game servers.
 
-_Not all games supported by LinuxGSM have been tested with this project._ See also [usage stats](https://linuxgsm.com/data/usage/).
+> [!WARNING]
+> Not all games supported by LinuxGSM have been tested with this project. See also [usage stats](https://linuxgsm.com/data/usage/).
 
 **Others**
 
@@ -773,6 +774,7 @@ When choosing an EC2 instance type, consider:
 - Available vCPU and RAM (based on game server requirements)
   - Keep in mind some of the server resources are used for the OS, Docker, etc and are not available to the game server itself. For example a 8GB instance might have ~6.5GB available
 - CPU frequency (GHz) / System single-core and multi-core [performance scores](https://browser.geekbench.com/search?utf8=✓&q=amazon+ec2)
+  - Keep in mind some games use distribute loads between vCPUs better, while others prefer a more powerful single vCPU
 - [Instance generation](https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html) (newer generations are more performant)
 - Spot price and price history
   - Sometimes, for some reason, the instance type is significally cheaper or more expensive in a specific availability zone than the others. See [Availability Zones](#availability-zones).
